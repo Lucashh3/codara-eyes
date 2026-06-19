@@ -12,7 +12,8 @@ DeepSeek (que ainda tem fallback por regras).
 
 - **web** ([apps/web](apps/web)): Next.js 15 + React 19 + Tailwind v4, Drizzle ORM
 - **vision-worker** ([apps/vision-worker](apps/vision-worker)): Python + FastAPI,
-  Playwright (captura), OpenCV (saliency) + Tesseract (OCR), DeepSeek (relatório)
+  Playwright (captura), DeepGaze IIE (saliency, eye-tracking) com fallback OpenCV
+  + Tesseract (OCR), DeepSeek (relatório)
 - **shared** ([packages/shared](packages/shared)): contratos Zod ↔ Pydantic
 - **infra**: Postgres (banco + fila de jobs), Caddy (proxy + HTTPS), Docker Compose
 
@@ -51,3 +52,10 @@ cd apps/vision-worker && python -m pytest -q         # worker
 
 Visão de produto, arquitetura, pipeline, contratos de dados e deploy em
 [docs/](docs/).
+
+## Atualizações
+
+- **2026-06-19** — saliency migrada de OpenCV para **DeepGaze IIE** (treinado em
+  eye-tracking) e **scores de UX recalibrados** para a nova distribuição de
+  atenção. Alteração feita e deployada **direto na VPS** (deploy ativo roda de
+  `/opt/codara-eyes`).
