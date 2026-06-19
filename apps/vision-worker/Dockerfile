@@ -13,9 +13,21 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-por tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/*
 
+# Modelo de saliency DeepGaze IIE (treinado em eye-tracking) — CPU.
+# torch/torchvision vem do indice CPU-only (sem libs CUDA). clip/einops/timm
+# sao deps de import do pacote deepgaze_pytorch (mesmo sem usar aqueles modelos).
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu \
+    && pip install --no-cache-dir scipy ftfy regex tqdm einops timm \
+        "git+https://github.com/openai/CLIP.git" \
+        "git+https://github.com/matthias-k/DeepGaze.git"
+
+# Pre-baixa os pesos do DeepGaze IIE para dentro da imagem (runtime sem rede).
+RUN python -c "import torch; torch.set_num_threads(1); import deepgaze_pytorch; deepgaze_pytorch.DeepGazeIIE(pretrained=True); print('DeepGaze IIE weights cached')"
+
 COPY apps/vision-worker /app
 
-RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir .
+RUN pip install --no-cache-dir .
 
 EXPOSE 8000
 

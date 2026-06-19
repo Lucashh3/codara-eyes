@@ -10,6 +10,8 @@ o contrato de dados.
 
 from __future__ import annotations
 
+import logging
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from statistics import median
@@ -22,10 +24,27 @@ from pytesseract import Output
 
 from app.scoring import compute_scores
 
+logger = logging.getLogger(__name__)
+
 MAX_WIDTH = 1440
 OCR_LANG = "por+eng"
 OCR_MIN_CONF = 40
 MAX_TEXT_BLOCKS = 4
+
+# --- saliency: modelo DeepGaze IIE (eye-tracking) com fallback OpenCV --------
+# Backend: "deepgaze" (modelo ML treinado em eye-tracking) ou "opencv" (bottom-up).
+SALIENCY_BACKEND = os.environ.get("SALIENCY_BACKEND", "deepgaze").lower()
+# Paginas full-page sao muito altas; processamos em tiles de viewport para
+# manter resolucao e limitar a RAM. Largura-alvo e altura do tile em px.
+SALIENCY_TARGET_W = int(os.environ.get("SALIENCY_TARGET_W", "1024"))
+SALIENCY_TILE_H = int(os.environ.get("SALIENCY_TILE_H", "1024"))
+SALIENCY_TILE_OVERLAP = int(os.environ.get("SALIENCY_TILE_OVERLAP", "64"))
+SALIENCY_MAX_TILES = int(os.environ.get("SALIENCY_MAX_TILES", "12"))
+SALIENCY_THREADS = int(os.environ.get("SALIENCY_THREADS", "2"))
+
+_dg_model: Any = None
+_dg_torch: Any = None
+_dg_failed = False
 
 
 @dataclass
@@ -61,17 +80,93 @@ def _fold_px(viewport_type: str, width: int, height: int) -> int:
 
 # --- saliency ---------------------------------------------------------------
 
-def _saliency(img: np.ndarray) -> np.ndarray:
+def _normalize01(smap: np.ndarray) -> np.ndarray:
+    smap = smap.astype("float32")
+    low, high = float(smap.min()), float(smap.max())
+    if high <= low:
+        return np.zeros(smap.shape, dtype="float32")
+    return (smap - low) / (high - low)
+
+
+def _saliency_opencv(img: np.ndarray) -> np.ndarray:
+    """Saliency bottom-up classico (contraste/bordas). Fallback barato."""
     engine = cv2.saliency.StaticSaliencyFineGrained_create()
     ok, smap = engine.computeSaliency(img)
     if not ok:
         return np.zeros(img.shape[:2], dtype="float32")
-    # O range cru varia entre versoes do OpenCV; normaliza min-max para [0, 1].
-    smap = smap.astype("float32")
-    low, high = float(smap.min()), float(smap.max())
-    if high <= low:
-        return np.zeros(img.shape[:2], dtype="float32")
-    return (smap - low) / (high - low)
+    return _normalize01(smap)
+
+
+def _get_deepgaze():
+    """Carrega o DeepGaze IIE uma unica vez (lazy singleton). Retorna
+    (torch, model) ou None se indisponivel — nesse caso caimos no OpenCV."""
+    global _dg_model, _dg_torch, _dg_failed
+    if _dg_model is not None:
+        return _dg_torch, _dg_model
+    if _dg_failed:
+        return None
+    try:
+        import torch  # noqa: PLC0415
+        import deepgaze_pytorch  # noqa: PLC0415
+
+        torch.set_num_threads(SALIENCY_THREADS)
+        model = deepgaze_pytorch.DeepGazeIIE(pretrained=True)
+        model.eval()
+        _dg_torch, _dg_model = torch, model
+        logger.info("DeepGaze IIE carregado (threads=%s)", SALIENCY_THREADS)
+        return _dg_torch, _dg_model
+    except Exception:
+        logger.exception("falha ao carregar DeepGaze IIE; usando fallback OpenCV")
+        _dg_failed = True
+        return None
+
+
+def _saliency_deepgaze(img: np.ndarray, torch, model) -> np.ndarray:
+    """Saliency aprendida em eye-tracking. Processa a pagina (alta) em tiles
+    verticais de viewport para preservar resolucao e limitar a RAM, depois
+    costura os mapas e devolve no tamanho original da imagem."""
+    H0, W0 = img.shape[:2]
+    scale = min(1.0, SALIENCY_TARGET_W / W0)  # nunca faz upscale (ex.: mobile)
+    rw, rh = max(1, int(round(W0 * scale))), max(1, int(round(H0 * scale)))
+    img_r = cv2.resize(img, (rw, rh), interpolation=cv2.INTER_AREA)
+    rgb = cv2.cvtColor(img_r, cv2.COLOR_BGR2RGB)
+
+    full = np.zeros((rh, rw), dtype="float32")
+    weight = np.zeros((rh, rw), dtype="float32")
+    step = max(1, SALIENCY_TILE_H - SALIENCY_TILE_OVERLAP)
+    y, tiles = 0, 0
+    while y < rh and tiles < SALIENCY_MAX_TILES:
+        y2 = min(y + SALIENCY_TILE_H, rh)
+        tile = rgb[y:y2]
+        th, tw = tile.shape[:2]
+        img_t = torch.tensor(tile.transpose(2, 0, 1)[None].astype("float32"))
+        cb = torch.zeros((1, th, tw), dtype=torch.float32)  # centerbias uniforme
+        with torch.no_grad():
+            out = model(img_t, cb)
+        sm = np.exp(out.squeeze().cpu().numpy().astype("float32"))
+        full[y:y2] += sm
+        weight[y:y2] += 1.0
+        tiles += 1
+        if y2 >= rh:
+            break
+        y = y2 - SALIENCY_TILE_OVERLAP
+
+    full /= np.maximum(weight, 1e-6)
+    full = _normalize01(full)
+    if (rh, rw) != (H0, W0):
+        full = cv2.resize(full, (W0, H0), interpolation=cv2.INTER_LINEAR)
+    return _normalize01(full)
+
+
+def _saliency(img: np.ndarray) -> np.ndarray:
+    if SALIENCY_BACKEND == "deepgaze":
+        dg = _get_deepgaze()
+        if dg is not None:
+            try:
+                return _saliency_deepgaze(img, dg[0], dg[1])
+            except Exception:
+                logger.exception("inferencia DeepGaze falhou; fallback OpenCV nesta imagem")
+    return _saliency_opencv(img)
 
 
 def _heatmap(img: np.ndarray, smap: np.ndarray) -> np.ndarray:
@@ -250,6 +345,9 @@ def analyze_viewport(
     artifacts_dir: Path,
     analysis_id: str,
 ) -> VisionResult:
+    # O analysis_id chega como uuid.UUID vindo do banco; o pathlib so aceita
+    # str/os.PathLike no operador "/", entao normalizamos para str aqui.
+    analysis_id = str(analysis_id)
     img = _load_normalized(source_path)
     height, width = img.shape[:2]
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
