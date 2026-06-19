@@ -1,0 +1,974 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Análise · Codara Eyes</title>
+  <style>
+    :root {
+      --bg:      oklch(98% 0.005 250);
+      --surface: oklch(100% 0 0);
+      --fg:      oklch(22% 0.02 240);
+      --muted:   oklch(50% 0.018 240);
+      --border:  oklch(90% 0.008 240);
+      --accent:  oklch(58% 0.16 145);
+
+      --accent-soft: color-mix(in oklch, var(--accent) 14%, transparent);
+      --fg-soft:     color-mix(in oklch, var(--fg) 6%, transparent);
+
+      --success: oklch(58% 0.14 145);
+      --warning: oklch(70% 0.16 85);
+      --danger:  oklch(55% 0.18 25);
+
+      --headline: oklch(50% 0.14 145);
+      --subheadline: oklch(60% 0.14 85);
+      --cta: oklch(55% 0.16 25);
+
+      --font-display: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+      --font-body:    -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+      --font-mono:    'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+
+      --fs-h1: 20px;
+      --fs-h2: 16px;
+      --fs-body: 14px;
+      --fs-meta: 12px;
+
+      --gap-xs: 8px;
+      --gap-sm: 12px;
+      --gap-md: 16px;
+      --gap-lg: 24px;
+      --gap-xl: 32px;
+
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: var(--fs-body);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: var(--gap-md);
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .back-btn:hover {
+      border-color: var(--fg);
+      color: var(--fg);
+    }
+
+    .back-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .header-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .header-title h1 {
+      font-size: var(--fs-h1);
+      font-weight: 600;
+      margin: 0;
+      max-width: 400px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--gap-sm);
+    }
+
+    .meta-tag {
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      background: oklch(92% 0.06 145);
+      color: oklch(40% 0.12 145);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--success);
+    }
+
+    /* Main content */
+    .main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: var(--gap-lg);
+    }
+
+    /* AI Report Section */
+    .report-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--gap-lg);
+      margin-bottom: var(--gap-lg);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--gap-md);
+    }
+
+    .section-title {
+      font-size: var(--fs-h2);
+      font-weight: 600;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .model-badge {
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--muted);
+      background: var(--bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .report-summary {
+      color: var(--muted);
+      margin-bottom: var(--gap-lg);
+      line-height: 1.6;
+    }
+
+    .report-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--gap-md);
+    }
+
+    @media (max-width: 900px) {
+      .report-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .report-card {
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: var(--gap-md);
+    }
+
+    .report-card-title {
+      font-size: var(--fs-meta);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--gap-sm);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .report-card-title.problems { color: var(--danger); }
+    .report-card-title.recommendations { color: var(--accent); }
+    .report-card-title.hypotheses { color: oklch(55% 0.14 280); }
+
+    .report-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .report-list li {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .report-list li:last-child {
+      border-bottom: none;
+    }
+
+    /* Viewport Toggle */
+    .viewport-section {
+      margin-bottom: var(--gap-lg);
+    }
+
+    .viewport-toggle {
+      display: inline-flex;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 4px;
+    }
+
+    .viewport-btn {
+      padding: 8px 16px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .viewport-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* Image viewer */
+    .viewer-section {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: var(--gap-lg);
+      margin-bottom: var(--gap-lg);
+    }
+
+    @media (max-width: 1100px) {
+      .viewer-section {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .image-viewer {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .viewer-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--gap-sm) var(--gap-md);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .layer-tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .layer-tab {
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: var(--radius);
+      transition: all 0.15s;
+    }
+
+    .layer-tab.active {
+      background: var(--fg);
+      color: var(--surface);
+      border-color: var(--fg);
+    }
+
+    .elements-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .toggle-checkbox {
+      width: 36px;
+      height: 20px;
+      background: var(--border);
+      border-radius: 10px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .toggle-checkbox.active {
+      background: var(--accent);
+    }
+
+    .toggle-checkbox::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.15s;
+    }
+
+    .toggle-checkbox.active::after {
+      transform: translateX(16px);
+    }
+
+    .viewer-canvas {
+      position: relative;
+      aspect-ratio: 16 / 10;
+      background: linear-gradient(135deg, var(--fg-soft), var(--accent-soft));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .heatmap-overlay {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 200px 150px at 50% 25%, oklch(65% 0.25 25 / 0.7), transparent),
+        radial-gradient(ellipse 120px 80px at 30% 60%, oklch(70% 0.2 85 / 0.5), transparent),
+        radial-gradient(ellipse 100px 60px at 70% 75%, oklch(55% 0.15 145 / 0.4), transparent);
+    }
+
+    .element-box {
+      position: absolute;
+      border: 2px solid;
+      border-radius: 4px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      padding: 4px;
+    }
+
+    .element-box.headline {
+      border-color: var(--headline);
+      top: 15%;
+      left: 20%;
+      width: 60%;
+      height: 12%;
+    }
+
+    .element-box.subheadline {
+      border-color: var(--subheadline);
+      top: 30%;
+      left: 25%;
+      width: 50%;
+      height: 8%;
+    }
+
+    .element-box.cta {
+      border-color: var(--cta);
+      top: 45%;
+      left: 40%;
+      width: 20%;
+      height: 8%;
+    }
+
+    .element-label {
+      font-size: 9px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 2px 4px;
+      border-radius: 2px;
+      color: white;
+    }
+
+    .element-box.headline .element-label { background: var(--headline); }
+    .element-box.subheadline .element-label { background: var(--subheadline); }
+    .element-box.cta .element-label { background: var(--cta); }
+
+    /* Scorecard */
+    .scorecard {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--gap-lg);
+    }
+
+    .scorecard-title {
+      font-size: var(--fs-h2);
+      font-weight: 600;
+      margin: 0 0 var(--gap-md);
+    }
+
+    .score-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap-sm);
+    }
+
+    .score-item {
+      display: flex;
+      align-items: center;
+      gap: var(--gap-sm);
+    }
+
+    .score-label {
+      flex: 1;
+      font-size: 13px;
+    }
+
+    .score-bar-container {
+      width: 120px;
+      height: 6px;
+      background: var(--bg);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .score-bar {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+
+    .score-bar.high { background: var(--success); }
+    .score-bar.medium { background: var(--warning); }
+    .score-bar.low { background: var(--danger); }
+
+    .score-value {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      width: 40px;
+      text-align: right;
+    }
+
+    .score-hint {
+      font-size: 10px;
+      color: var(--muted);
+      width: 80px;
+      text-align: right;
+    }
+
+    /* Elements detected */
+    .elements-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--gap-lg);
+    }
+
+    .elements-title {
+      font-size: var(--fs-h2);
+      font-weight: 600;
+      margin: 0 0 var(--gap-md);
+    }
+
+    .elements-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .elements-table th,
+    .elements-table td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .elements-table th {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .elements-table .num {
+      font-family: var(--font-mono);
+      text-align: right;
+    }
+
+    .element-type-badge {
+      display: inline-flex;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+    }
+
+    .element-type-badge.headline { background: oklch(92% 0.06 145); color: var(--headline); }
+    .element-type-badge.subheadline { background: oklch(92% 0.06 85); color: oklch(50% 0.14 85); }
+    .element-type-badge.cta { background: oklch(92% 0.06 25); color: var(--cta); }
+    .element-type-badge.other { background: var(--bg); color: var(--muted); }
+
+    .fold-badge {
+      font-size: 10px;
+      padding: 2px 5px;
+      border-radius: 3px;
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .fold-badge.below {
+      background: var(--fg-soft);
+      color: var(--muted);
+    }
+
+    /* GSAP animation prep */
+    .header,
+    .report-section,
+    .report-card,
+    .viewport-section,
+    .image-viewer,
+    .scorecard,
+    .score-item,
+    .elements-section,
+    .heatmap-overlay,
+    .element-box {
+      opacity: 0;
+    }
+
+    .score-bar {
+      width: 0 !important;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</head>
+<body>
+  <header class="header" data-od-id="header">
+    <div class="header-left">
+      <a href="dashboard.html" class="back-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </a>
+      <div class="header-title">
+        <h1>https://acme.com/landing</h1>
+        <div class="header-meta">
+          <span class="meta-tag">Landing page</span>
+          <span class="meta-tag">Geração de leads</span>
+          <span class="meta-tag">19 jun 2026, 14:32</span>
+        </div>
+      </div>
+    </div>
+    <span class="status-badge">
+      <span class="status-dot"></span>
+      Concluído
+    </span>
+  </header>
+
+  <main class="main" data-od-id="main">
+    <!-- AI Report -->
+    <section class="report-section" data-od-id="ai-report">
+      <div class="section-header">
+        <h2 class="section-title">
+          Relatório com IA
+          <span class="model-badge">DeepSeek</span>
+        </h2>
+      </div>
+
+      <p class="report-summary">
+        A landing page apresenta boa hierarquia visual com headline clara e CTA acima da dobra.
+        No entanto, há competição por atenção entre elementos secundários e o contraste do CTA
+        poderia ser melhorado. A área abaixo da dobra contém informações importantes que podem
+        não ser visualizadas por uma parcela significativa dos visitantes.
+      </p>
+
+      <div class="report-grid">
+        <div class="report-card">
+          <h3 class="report-card-title problems">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            Problemas Prioritários
+          </h3>
+          <ul class="report-list">
+            <li>CTA com baixa visibilidade (12% share de atenção vs. 25% ideal)</li>
+            <li>Elementos decorativos competem com conteúdo principal</li>
+            <li>Informações de preço abaixo da dobra</li>
+          </ul>
+        </div>
+
+        <div class="report-card">
+          <h3 class="report-card-title recommendations">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            Recomendações
+          </h3>
+          <ul class="report-list">
+            <li>Aumentar contraste do botão CTA em 40%</li>
+            <li>Reduzir elementos visuais na área do hero</li>
+            <li>Mover pricing para acima da dobra</li>
+          </ul>
+        </div>
+
+        <div class="report-card">
+          <h3 class="report-card-title hypotheses">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+            </svg>
+            Hipóteses de Teste A/B
+          </h3>
+          <ul class="report-list">
+            <li>CTA laranja vs. verde: esperado +15% CTR</li>
+            <li>Hero com vs. sem ilustração: validar foco</li>
+            <li>Pricing above-fold vs. below: medir scroll depth</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Viewport Toggle -->
+    <div class="viewport-section" data-od-id="viewport-toggle">
+      <div class="viewport-toggle">
+        <button class="viewport-btn active">Desktop</button>
+        <button class="viewport-btn">Mobile</button>
+      </div>
+    </div>
+
+    <!-- Image Viewer + Scorecard -->
+    <div class="viewer-section" data-od-id="viewer-section">
+      <div class="image-viewer">
+        <div class="viewer-toolbar">
+          <div class="layer-tabs">
+            <button class="layer-tab active">Heatmap</button>
+            <button class="layer-tab">Foco</button>
+            <button class="layer-tab">Original</button>
+            <button class="layer-tab">Captura</button>
+          </div>
+          <label class="elements-toggle">
+            <span>Elementos</span>
+            <div class="toggle-checkbox active" id="elements-toggle"></div>
+          </label>
+        </div>
+        <div class="viewer-canvas">
+          <div class="heatmap-overlay"></div>
+          <div class="element-box headline" id="box-headline">
+            <span class="element-label">Headline</span>
+          </div>
+          <div class="element-box subheadline" id="box-subheadline">
+            <span class="element-label">Subheadline</span>
+          </div>
+          <div class="element-box cta" id="box-cta">
+            <span class="element-label">CTA</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="scorecard" data-od-id="scorecard">
+        <h3 class="scorecard-title">Scorecard de UX</h3>
+        <div class="score-list">
+          <div class="score-item">
+            <span class="score-label">Visibilidade do CTA</span>
+            <div class="score-bar-container">
+              <div class="score-bar low" style="width: 42%"></div>
+            </div>
+            <span class="score-value">42%</span>
+            <span class="score-hint">Maior = melhor</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">Atenção na headline</span>
+            <div class="score-bar-container">
+              <div class="score-bar high" style="width: 78%"></div>
+            </div>
+            <span class="score-value">78%</span>
+            <span class="score-hint">Maior = melhor</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">Hierarquia visual</span>
+            <div class="score-bar-container">
+              <div class="score-bar medium" style="width: 65%"></div>
+            </div>
+            <span class="score-value">65%</span>
+            <span class="score-hint">Maior = melhor</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">Competição por atenção</span>
+            <div class="score-bar-container">
+              <div class="score-bar medium" style="width: 58%"></div>
+            </div>
+            <span class="score-value">58%</span>
+            <span class="score-hint">Menor = melhor</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">Eficiência acima da dobra</span>
+            <div class="score-bar-container">
+              <div class="score-bar high" style="width: 71%"></div>
+            </div>
+            <span class="score-value">71%</span>
+            <span class="score-hint">Maior = melhor</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">Poluição visual</span>
+            <div class="score-bar-container">
+              <div class="score-bar medium" style="width: 45%"></div>
+            </div>
+            <span class="score-value">45%</span>
+            <span class="score-hint">Menor = melhor</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Elements Detected -->
+    <section class="elements-section" data-od-id="elements-detected">
+      <h3 class="elements-title">Elementos Detectados</h3>
+      <table class="elements-table">
+        <thead>
+          <tr>
+            <th>Tipo</th>
+            <th>Conteúdo</th>
+            <th class="num">Share de Atenção</th>
+            <th>Posição</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="element-type-badge headline">Headline</span></td>
+            <td>"Automatize seu fluxo de trabalho em minutos"</td>
+            <td class="num">35%</td>
+            <td><span class="fold-badge">Above fold</span></td>
+          </tr>
+          <tr>
+            <td><span class="element-type-badge subheadline">Subheadline</span></td>
+            <td>"Conecte suas ferramentas favoritas e economize 10h/semana"</td>
+            <td class="num">18%</td>
+            <td><span class="fold-badge">Above fold</span></td>
+          </tr>
+          <tr>
+            <td><span class="element-type-badge cta">CTA</span></td>
+            <td>"Começar grátis"</td>
+            <td class="num">12%</td>
+            <td><span class="fold-badge">Above fold</span></td>
+          </tr>
+          <tr>
+            <td><span class="element-type-badge other">Imagem</span></td>
+            <td>Hero illustration (decorativa)</td>
+            <td class="num">22%</td>
+            <td><span class="fold-badge">Above fold</span></td>
+          </tr>
+          <tr>
+            <td><span class="element-type-badge other">Texto</span></td>
+            <td>Seção de features</td>
+            <td class="num">8%</td>
+            <td><span class="fold-badge below">Below fold</span></td>
+          </tr>
+          <tr>
+            <td><span class="element-type-badge other">Texto</span></td>
+            <td>Pricing table</td>
+            <td class="num">5%</td>
+            <td><span class="fold-badge below">Below fold</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    // Layer tabs
+    const layerTabs = document.querySelectorAll('.layer-tab');
+    layerTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        layerTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    // Viewport toggle
+    const viewportBtns = document.querySelectorAll('.viewport-btn');
+    viewportBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        viewportBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+
+    // Elements toggle
+    const elementsToggle = document.getElementById('elements-toggle');
+    const elementBoxes = document.querySelectorAll('.element-box');
+
+    elementsToggle.addEventListener('click', () => {
+      elementsToggle.classList.toggle('active');
+      const show = elementsToggle.classList.contains('active');
+      elementBoxes.forEach(box => {
+        if (show) {
+          box.style.display = 'flex';
+          gsap.fromTo(box, { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 0.3 });
+        } else {
+          gsap.to(box, { opacity: 0, scale: 0.9, duration: 0.2, onComplete: () => box.style.display = 'none' });
+        }
+      });
+    });
+
+    // GSAP Animations
+    document.addEventListener('DOMContentLoaded', () => {
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+      // Header
+      tl.fromTo('.header',
+        { opacity: 0, y: -20 },
+        { opacity: 1, y: 0, duration: 0.5 }
+      )
+      // Report section
+      .fromTo('.report-section',
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.6 },
+        '-=0.2'
+      )
+      // Report cards stagger
+      .fromTo('.report-card',
+        { opacity: 0, y: 20, scale: 0.96 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.4, stagger: 0.1 },
+        '-=0.3'
+      )
+      // Viewport toggle
+      .fromTo('.viewport-section',
+        { opacity: 0, x: -20 },
+        { opacity: 1, x: 0, duration: 0.3 },
+        '-=0.2'
+      )
+      // Image viewer
+      .fromTo('.image-viewer',
+        { opacity: 0, scale: 0.98 },
+        { opacity: 1, scale: 1, duration: 0.5 },
+        '-=0.1'
+      )
+      // Heatmap overlay fade in
+      .fromTo('.heatmap-overlay',
+        { opacity: 0 },
+        { opacity: 1, duration: 0.8 },
+        '-=0.3'
+      )
+      // Element boxes pop in
+      .fromTo('.element-box',
+        { opacity: 0, scale: 0.8 },
+        { opacity: 1, scale: 1, duration: 0.4, stagger: 0.1 },
+        '-=0.5'
+      )
+      // Scorecard
+      .fromTo('.scorecard',
+        { opacity: 0, x: 30 },
+        { opacity: 1, x: 0, duration: 0.5 },
+        '-=0.6'
+      )
+      // Score items stagger
+      .fromTo('.score-item',
+        { opacity: 0, x: 20 },
+        { opacity: 1, x: 0, duration: 0.3, stagger: 0.06 },
+        '-=0.3'
+      )
+      // Animate score bars
+      .add(() => {
+        document.querySelectorAll('.score-bar').forEach(bar => {
+          const targetWidth = bar.style.width || bar.getAttribute('data-width');
+          gsap.to(bar, {
+            width: targetWidth,
+            duration: 0.8,
+            ease: 'power2.out'
+          });
+        });
+      }, '-=0.2')
+      // Elements section
+      .fromTo('.elements-section',
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.5 },
+        '-=0.4'
+      );
+
+      // Store original widths and set to 0 for animation
+      document.querySelectorAll('.score-bar').forEach(bar => {
+        const style = bar.getAttribute('style');
+        const widthMatch = style?.match(/width:\s*(\d+%)/);
+        if (widthMatch) {
+          bar.setAttribute('data-width', widthMatch[1]);
+        }
+      });
+
+      // Hover animations for cards
+      document.querySelectorAll('.report-card').forEach(card => {
+        card.addEventListener('mouseenter', () => {
+          gsap.to(card, { y: -4, scale: 1.02, duration: 0.25 });
+        });
+        card.addEventListener('mouseleave', () => {
+          gsap.to(card, { y: 0, scale: 1, duration: 0.25 });
+        });
+      });
+
+      // Layer tab click animation
+      document.querySelectorAll('.layer-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          gsap.fromTo('.heatmap-overlay',
+            { opacity: 0 },
+            { opacity: 1, duration: 0.5 }
+          );
+        });
+      });
+
+      // Viewport toggle animation
+      document.querySelectorAll('.viewport-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          gsap.fromTo('.viewer-canvas',
+            { scale: 0.98, opacity: 0.8 },
+            { scale: 1, opacity: 1, duration: 0.3 }
+          );
+        });
+      });
+    });
+  </script>
+</body>
+</html>

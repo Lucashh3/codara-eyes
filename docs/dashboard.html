@@ -1,0 +1,879 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dashboard · Codara Eyes</title>
+  <style>
+    :root {
+      --bg:      oklch(98% 0.005 250);
+      --surface: oklch(100% 0 0);
+      --fg:      oklch(22% 0.02 240);
+      --muted:   oklch(50% 0.018 240);
+      --border:  oklch(90% 0.008 240);
+      --accent:  oklch(58% 0.16 145);
+
+      --accent-soft: color-mix(in oklch, var(--accent) 14%, transparent);
+      --fg-soft:     color-mix(in oklch, var(--fg) 6%, transparent);
+
+      --success: oklch(58% 0.14 145);
+      --warning: oklch(70% 0.16 85);
+      --danger:  oklch(55% 0.18 25);
+
+      --font-display: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+      --font-body:    -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+      --font-mono:    'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+
+      --fs-h1: 24px;
+      --fs-h2: 18px;
+      --fs-body: 14px;
+      --fs-meta: 12px;
+
+      --gap-xs: 8px;
+      --gap-sm: 12px;
+      --gap-md: 16px;
+      --gap-lg: 24px;
+      --gap-xl: 32px;
+
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: var(--fs-body);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+    }
+
+    .logo-icon svg {
+      width: 18px;
+      height: 18px;
+      color: white;
+    }
+
+    .logo-text {
+      font-family: var(--font-display);
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--gap-md);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: color-mix(in oklch, var(--accent) 88%, black);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--fg);
+      border-color: var(--border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--fg);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: none;
+      padding: 6px 10px;
+    }
+
+    .btn-ghost:hover {
+      color: var(--fg);
+    }
+
+    /* Main layout */
+    .main {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 0;
+      min-height: calc(100vh - 57px);
+    }
+
+    @media (max-width: 1024px) {
+      .main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Left panel - Create form */
+    .panel-create {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: var(--gap-lg);
+      overflow-y: auto;
+    }
+
+    .panel-title {
+      font-size: var(--fs-h2);
+      font-weight: 600;
+      margin: 0 0 var(--gap-lg);
+      letter-spacing: -0.01em;
+    }
+
+    .form-section {
+      margin-bottom: var(--gap-lg);
+    }
+
+    .form-section-title {
+      font-size: var(--fs-meta);
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: var(--gap-sm);
+    }
+
+    .source-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      padding: 4px;
+      border-radius: var(--radius);
+      margin-bottom: var(--gap-md);
+    }
+
+    .source-tab {
+      flex: 1;
+      padding: 8px 12px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .source-tab.active {
+      background: var(--surface);
+      color: var(--fg);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--fg);
+      font: inherit;
+      font-size: 14px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .input::placeholder {
+      color: var(--muted);
+    }
+
+    .file-upload {
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .file-upload:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .file-upload-icon {
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 8px;
+      color: var(--muted);
+    }
+
+    .file-upload-text {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .file-upload-text strong {
+      color: var(--accent);
+    }
+
+    .select-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--gap-sm);
+    }
+
+    .select-wrapper {
+      position: relative;
+    }
+
+    .select-wrapper label {
+      display: block;
+      font-size: var(--fs-meta);
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .select {
+      width: 100%;
+      padding: 10px 12px;
+      padding-right: 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--fg);
+      font: inherit;
+      font-size: 14px;
+      appearance: none;
+      cursor: pointer;
+    }
+
+    .select-wrapper::after {
+      content: '';
+      position: absolute;
+      right: 12px;
+      bottom: 14px;
+      width: 0;
+      height: 0;
+      border-left: 4px solid transparent;
+      border-right: 4px solid transparent;
+      border-top: 5px solid var(--muted);
+      pointer-events: none;
+    }
+
+    .label-input {
+      margin-top: var(--gap-md);
+    }
+
+    .label-input label {
+      display: block;
+      font-size: var(--fs-meta);
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .char-count {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: right;
+      margin-top: 4px;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      margin-top: var(--gap-md);
+    }
+
+    /* Right panel - Analysis list */
+    .panel-list {
+      padding: var(--gap-lg);
+      overflow-y: auto;
+    }
+
+    .list-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--gap-lg);
+    }
+
+    .list-header h2 {
+      font-size: var(--fs-h2);
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .refresh-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--fs-meta);
+      color: var(--muted);
+    }
+
+    .refresh-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .analysis-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--gap-sm);
+    }
+
+    .analysis-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .analysis-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .analysis-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .analysis-title {
+      font-weight: 500;
+      font-size: 14px;
+      margin: 0;
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .status-queued {
+      background: var(--fg-soft);
+      color: var(--muted);
+    }
+    .status-queued .status-dot { background: var(--muted); }
+
+    .status-capturing, .status-processing, .status-generating {
+      background: oklch(92% 0.06 85);
+      color: oklch(50% 0.14 85);
+    }
+    .status-capturing .status-dot,
+    .status-processing .status-dot,
+    .status-generating .status-dot {
+      background: var(--warning);
+      animation: pulse 1s infinite;
+    }
+
+    .status-completed {
+      background: oklch(92% 0.06 145);
+      color: oklch(40% 0.12 145);
+    }
+    .status-completed .status-dot { background: var(--success); }
+
+    .status-failed {
+      background: oklch(92% 0.06 25);
+      color: oklch(45% 0.14 25);
+    }
+    .status-failed .status-dot { background: var(--danger); }
+
+    .analysis-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--gap-sm);
+      flex-wrap: wrap;
+    }
+
+    .meta-tag {
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .meta-date {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--font-mono);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+    }
+
+    .empty-state-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 16px;
+      color: var(--border);
+    }
+
+    .empty-state h3 {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--fg);
+      margin: 0 0 8px;
+    }
+
+    .empty-state p {
+      font-size: 14px;
+      margin: 0;
+    }
+
+    /* Hidden file input */
+    .hidden-input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* GSAP animation prep */
+    .header,
+    .panel-create,
+    .panel-list,
+    .panel-title,
+    .form-section,
+    .btn-submit,
+    .list-header,
+    .analysis-card {
+      opacity: 0;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</head>
+<body>
+  <header class="header" data-od-id="header">
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 5c-4.5 0-8 3-9.5 7 1.5 4 5 7 9.5 7s8-3 9.5-7c-1.5-4-5-7-9.5-7z"/>
+        </svg>
+      </div>
+      <span class="logo-text">Codara Eyes</span>
+    </div>
+    <div class="header-actions">
+      <a href="compare.html" class="btn btn-secondary">Comparar A/B</a>
+      <button class="btn btn-ghost" onclick="window.location.href='login.html'">Sair</button>
+    </div>
+  </header>
+
+  <main class="main" data-od-id="main">
+    <!-- Left Panel: Create Analysis -->
+    <aside class="panel-create" data-od-id="panel-create">
+      <h2 class="panel-title">Nova Análise</h2>
+
+      <form id="create-form">
+        <div class="form-section">
+          <div class="form-section-title">Origem</div>
+          <div class="source-tabs">
+            <button type="button" class="source-tab active" data-source="url">URL</button>
+            <button type="button" class="source-tab" data-source="upload">Imagem</button>
+          </div>
+
+          <div id="source-url">
+            <input type="url" class="input" placeholder="https://exemplo.com/landing" id="url-input" />
+          </div>
+
+          <div id="source-upload" style="display: none;">
+            <label class="file-upload" for="file-input">
+              <svg class="file-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <div class="file-upload-text">
+                <strong>Clique para enviar</strong> ou arraste uma imagem<br>
+                <span style="font-size: 11px;">PNG, JPG até 10 MB</span>
+              </div>
+            </label>
+            <input type="file" id="file-input" class="hidden-input" accept="image/png,image/jpeg" />
+          </div>
+        </div>
+
+        <div class="form-section">
+          <div class="form-section-title">Configuração</div>
+          <div class="select-group">
+            <div class="select-wrapper">
+              <label>Tipo de página</label>
+              <select class="select" id="page-type">
+                <option value="landing">Landing page</option>
+                <option value="homepage">Homepage</option>
+                <option value="waitlist">Waitlist</option>
+                <option value="lead-capture">Captura de leads</option>
+              </select>
+            </div>
+            <div class="select-wrapper">
+              <label>Objetivo</label>
+              <select class="select" id="objective">
+                <option value="lead-gen">Geração de leads</option>
+                <option value="click-through">Click-through</option>
+                <option value="signup">Cadastro</option>
+                <option value="awareness">Awareness</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="label-input">
+            <label for="label-input">Rótulo (opcional)</label>
+            <input type="text" class="input" id="label-input" placeholder="Ex: Teste homepage v2" maxlength="120" />
+            <div class="char-count"><span id="char-count">0</span>/120</div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-submit" id="submit-btn">
+          Criar análise
+        </button>
+      </form>
+    </aside>
+
+    <!-- Right Panel: Analysis List -->
+    <section class="panel-list" data-od-id="panel-list">
+      <div class="list-header">
+        <h2>Análises Recentes</h2>
+        <div class="refresh-indicator">
+          <span class="refresh-dot"></span>
+          <span>Atualizando...</span>
+        </div>
+      </div>
+
+      <div class="analysis-list" id="analysis-list">
+        <!-- Analysis cards will be inserted here -->
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Source tabs
+    const sourceTabs = document.querySelectorAll('.source-tab');
+    const sourceUrl = document.getElementById('source-url');
+    const sourceUpload = document.getElementById('source-upload');
+
+    sourceTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        sourceTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        if (tab.dataset.source === 'url') {
+          sourceUrl.style.display = 'block';
+          sourceUpload.style.display = 'none';
+        } else {
+          sourceUrl.style.display = 'none';
+          sourceUpload.style.display = 'block';
+        }
+      });
+    });
+
+    // Character count
+    const labelInput = document.getElementById('label-input');
+    const charCount = document.getElementById('char-count');
+
+    labelInput.addEventListener('input', () => {
+      charCount.textContent = labelInput.value.length;
+    });
+
+    // Sample analysis data
+    const sampleAnalyses = [
+      {
+        id: '1',
+        title: 'https://acme.com/landing',
+        type: 'Landing page',
+        objective: 'Geração de leads',
+        status: 'completed',
+        date: '19 jun 2026, 14:32'
+      },
+      {
+        id: '2',
+        title: 'Homepage v2 - Teste dark mode',
+        type: 'Homepage',
+        objective: 'Click-through',
+        status: 'generating',
+        date: '19 jun 2026, 14:28'
+      },
+      {
+        id: '3',
+        title: 'https://startup.io/waitlist',
+        type: 'Waitlist',
+        objective: 'Cadastro',
+        status: 'processing',
+        date: '19 jun 2026, 14:15'
+      },
+      {
+        id: '4',
+        title: 'Upload de imagem',
+        type: 'Captura de leads',
+        objective: 'Geração de leads',
+        status: 'queued',
+        date: '19 jun 2026, 14:10'
+      },
+      {
+        id: '5',
+        title: 'https://old-site.com/about',
+        type: 'Landing page',
+        objective: 'Awareness',
+        status: 'failed',
+        date: '19 jun 2026, 13:45',
+        error: 'Timeout na captura'
+      }
+    ];
+
+    const statusLabels = {
+      queued: 'Na fila',
+      capturing: 'Capturando',
+      processing: 'Processando',
+      generating: 'Gerando relatório',
+      completed: 'Concluído',
+      failed: 'Falhou'
+    };
+
+    function renderAnalysisList() {
+      const list = document.getElementById('analysis-list');
+
+      if (sampleAnalyses.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <h3>Nenhuma análise ainda</h3>
+            <p>Crie sua primeira análise usando o formulário ao lado.</p>
+          </div>
+        `;
+        return;
+      }
+
+      list.innerHTML = sampleAnalyses.map(analysis => `
+        <a href="analysis-detail.html?id=${analysis.id}" class="analysis-card">
+          <div class="analysis-card-header">
+            <h3 class="analysis-title">${analysis.title}</h3>
+            <span class="status-badge status-${analysis.status}">
+              <span class="status-dot"></span>
+              ${statusLabels[analysis.status]}
+            </span>
+          </div>
+          <div class="analysis-meta">
+            <span class="meta-tag">${analysis.type}</span>
+            <span class="meta-tag">${analysis.objective}</span>
+            <span class="meta-date">${analysis.date}</span>
+          </div>
+          ${analysis.error ? `<div style="margin-top: 8px; font-size: 12px; color: var(--danger);">${analysis.error}</div>` : ''}
+        </a>
+      `).join('');
+    }
+
+    renderAnalysisList();
+
+    // Form submission
+    const form = document.getElementById('create-form');
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const newAnalysis = {
+        id: String(sampleAnalyses.length + 1),
+        title: document.getElementById('url-input').value || document.getElementById('label-input').value || 'Nova análise',
+        type: document.getElementById('page-type').selectedOptions[0].text,
+        objective: document.getElementById('objective').selectedOptions[0].text,
+        status: 'queued',
+        date: new Date().toLocaleString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+      };
+
+      sampleAnalyses.unshift(newAnalysis);
+      renderAnalysisList();
+
+      // Reset form
+      form.reset();
+      charCount.textContent = '0';
+
+      // Animate new card
+      const newCard = document.querySelector('.analysis-card');
+      gsap.fromTo(newCard,
+        { opacity: 0, y: -20, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: 'power2.out' }
+      );
+    });
+
+    // GSAP Animations
+    document.addEventListener('DOMContentLoaded', () => {
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+      // Header slide down
+      tl.fromTo('.header',
+        { opacity: 0, y: -20 },
+        { opacity: 1, y: 0, duration: 0.5 }
+      )
+      // Left panel slide in
+      .fromTo('.panel-create',
+        { opacity: 0, x: -30 },
+        { opacity: 1, x: 0, duration: 0.5 },
+        '-=0.3'
+      )
+      // Right panel slide in
+      .fromTo('.panel-list',
+        { opacity: 0, x: 30 },
+        { opacity: 1, x: 0, duration: 0.5 },
+        '-=0.4'
+      )
+      // Panel title
+      .fromTo('.panel-title',
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.4 },
+        '-=0.3'
+      )
+      // Form sections stagger
+      .fromTo('.form-section',
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.4, stagger: 0.1 },
+        '-=0.2'
+      )
+      // Submit button
+      .fromTo('.btn-submit',
+        { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.3 },
+        '-=0.1'
+      )
+      // List header
+      .fromTo('.list-header',
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.4 },
+        '-=0.3'
+      )
+      // Analysis cards stagger
+      .fromTo('.analysis-card',
+        { opacity: 0, y: 20, scale: 0.98 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.4, stagger: 0.08 },
+        '-=0.2'
+      );
+
+      // Card hover animations
+      document.querySelectorAll('.analysis-card').forEach(card => {
+        card.addEventListener('mouseenter', () => {
+          gsap.to(card, { y: -4, duration: 0.25, ease: 'power2.out' });
+        });
+        card.addEventListener('mouseleave', () => {
+          gsap.to(card, { y: 0, duration: 0.25, ease: 'power2.out' });
+        });
+      });
+
+      // Submit button hover
+      const submitBtn = document.querySelector('.btn-submit');
+      submitBtn.addEventListener('mouseenter', () => {
+        gsap.to(submitBtn, { scale: 1.02, duration: 0.2 });
+      });
+      submitBtn.addEventListener('mouseleave', () => {
+        gsap.to(submitBtn, { scale: 1, duration: 0.2 });
+      });
+
+      // File upload hover
+      const fileUpload = document.querySelector('.file-upload');
+      if (fileUpload) {
+        fileUpload.addEventListener('mouseenter', () => {
+          gsap.to(fileUpload, { scale: 1.02, duration: 0.2 });
+        });
+        fileUpload.addEventListener('mouseleave', () => {
+          gsap.to(fileUpload, { scale: 1, duration: 0.2 });
+        });
+      }
+
+      // Tab click animation
+      document.querySelectorAll('.source-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          gsap.fromTo(tab,
+            { scale: 0.95 },
+            { scale: 1, duration: 0.2, ease: 'back.out(1.7)' }
+          );
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Comparação A/B · Codara Eyes</title>
+  <style>
+    :root {
+      --bg:      oklch(98% 0.005 250);
+      --surface: oklch(100% 0 0);
+      --fg:      oklch(22% 0.02 240);
+      --muted:   oklch(50% 0.018 240);
+      --border:  oklch(90% 0.008 240);
+      --accent:  oklch(58% 0.16 145);
+
+      --accent-soft: color-mix(in oklch, var(--accent) 14%, transparent);
+      --fg-soft:     color-mix(in oklch, var(--fg) 6%, transparent);
+
+      --success: oklch(58% 0.14 145);
+      --danger:  oklch(55% 0.18 25);
+
+      --font-display: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+      --font-body:    -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif;
+      --font-mono:    'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+
+      --fs-h1: 20px;
+      --fs-h2: 16px;
+      --fs-body: 14px;
+      --fs-meta: 12px;
+
+      --gap-xs: 8px;
+      --gap-sm: 12px;
+      --gap-md: 16px;
+      --gap-lg: 24px;
+      --gap-xl: 32px;
+
+      --radius: 8px;
+      --radius-lg: 12px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--font-body);
+      font-size: var(--fs-body);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: var(--gap-md);
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+      text-decoration: none;
+    }
+
+    .back-btn:hover {
+      border-color: var(--fg);
+      color: var(--fg);
+    }
+
+    .back-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .header-title h1 {
+      font-size: var(--fs-h1);
+      font-weight: 600;
+      margin: 0;
+    }
+
+    /* Main content */
+    .main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: var(--gap-lg);
+    }
+
+    /* Selection form */
+    .selection-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--gap-lg);
+      margin-bottom: var(--gap-lg);
+    }
+
+    .selection-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto;
+      gap: var(--gap-md);
+      align-items: end;
+    }
+
+    @media (max-width: 800px) {
+      .selection-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .select-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .select-wrapper label {
+      font-size: var(--fs-meta);
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .select {
+      width: 100%;
+      padding: 10px 12px;
+      padding-right: 32px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--fg);
+      font: inherit;
+      font-size: 14px;
+      appearance: none;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    .select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+
+    .vs-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      background: var(--bg);
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: color-mix(in oklch, var(--accent) 88%, black);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Summary section */
+    .summary-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--gap-lg);
+      margin-bottom: var(--gap-lg);
+    }
+
+    .summary-title {
+      font-size: var(--fs-h2);
+      font-weight: 600;
+      margin: 0 0 var(--gap-sm);
+    }
+
+    .summary-text {
+      color: var(--muted);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    /* Side by side heatmaps */
+    .heatmaps-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--gap-lg);
+      margin-bottom: var(--gap-lg);
+    }
+
+    @media (max-width: 900px) {
+      .heatmaps-section {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .heatmap-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .heatmap-header {
+      padding: var(--gap-md);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .heatmap-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .version-badge {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: white;
+    }
+
+    .version-badge.a { background: oklch(55% 0.14 250); }
+    .version-badge.b { background: var(--accent); }
+
+    .heatmap-title {
+      font-size: 13px;
+      font-weight: 500;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .heatmap-canvas {
+      aspect-ratio: 16 / 10;
+      background: linear-gradient(135deg, var(--fg-soft), var(--accent-soft));
+      position: relative;
+    }
+
+    .heatmap-overlay-a {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 180px 140px at 50% 30%, oklch(65% 0.25 25 / 0.6), transparent),
+        radial-gradient(ellipse 100px 70px at 35% 55%, oklch(70% 0.2 85 / 0.4), transparent),
+        radial-gradient(ellipse 80px 50px at 65% 70%, oklch(55% 0.15 145 / 0.3), transparent);
+    }
+
+    .heatmap-overlay-b {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 220px 160px at 50% 28%, oklch(65% 0.25 25 / 0.75), transparent),
+        radial-gradient(ellipse 140px 90px at 50% 55%, oklch(70% 0.2 85 / 0.5), transparent),
+        radial-gradient(ellipse 100px 60px at 50% 75%, oklch(55% 0.15 145 / 0.4), transparent);
+    }
+
+    /* Delta table */
+    .delta-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: var(--gap-lg);
+    }
+
+    .delta-title {
+      font-size: var(--fs-h2);
+      font-weight: 600;
+      margin: 0 0 var(--gap-md);
+    }
+
+    .delta-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .delta-table th,
+    .delta-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .delta-table th {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .delta-table .num {
+      font-family: var(--font-mono);
+      text-align: right;
+    }
+
+    .delta-positive {
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    .delta-negative {
+      color: var(--danger);
+      font-weight: 600;
+    }
+
+    .delta-neutral {
+      color: var(--muted);
+    }
+
+    .delta-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .delta-indicator svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    .score-bar-mini {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .bar-a, .bar-b {
+      height: 6px;
+      border-radius: 3px;
+    }
+
+    .bar-a {
+      background: oklch(55% 0.14 250);
+    }
+
+    .bar-b {
+      background: var(--accent);
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 64px 24px;
+      color: var(--muted);
+    }
+
+    .empty-state-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      color: var(--border);
+    }
+
+    .empty-state h3 {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--fg);
+      margin: 0 0 8px;
+    }
+
+    .empty-state p {
+      font-size: 14px;
+      margin: 0;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .comparison-result {
+      display: none;
+    }
+
+    .comparison-result.visible {
+      display: block;
+    }
+
+    /* GSAP animation prep */
+    .header,
+    .selection-section,
+    .empty-state,
+    .summary-section,
+    .heatmap-card,
+    .delta-section,
+    .heatmap-overlay-a,
+    .heatmap-overlay-b {
+      opacity: 0;
+    }
+
+    .bar-a, .bar-b {
+      width: 0 !important;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+</head>
+<body>
+  <header class="header" data-od-id="header">
+    <div class="header-left">
+      <a href="dashboard.html" class="back-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+      </a>
+      <div class="header-title">
+        <h1>Comparação A/B</h1>
+      </div>
+    </div>
+  </header>
+
+  <main class="main" data-od-id="main">
+    <!-- Selection Form -->
+    <section class="selection-section" data-od-id="selection">
+      <div class="selection-grid">
+        <div class="select-wrapper">
+          <label for="version-a">Versão A (base)</label>
+          <select class="select" id="version-a">
+            <option value="">Selecione uma análise...</option>
+            <option value="1">https://acme.com/landing (19 jun, 14:32)</option>
+            <option value="2">Homepage v2 - Dark mode (18 jun, 10:15)</option>
+            <option value="3">Landing page v1 (17 jun, 16:45)</option>
+          </select>
+        </div>
+
+        <div class="vs-badge">VS</div>
+
+        <div class="select-wrapper">
+          <label for="version-b">Versão B (alvo)</label>
+          <select class="select" id="version-b">
+            <option value="">Selecione uma análise...</option>
+            <option value="1">https://acme.com/landing (19 jun, 14:32)</option>
+            <option value="2">Homepage v2 - Dark mode (18 jun, 10:15)</option>
+            <option value="3">Landing page v1 (17 jun, 16:45)</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary" id="compare-btn" disabled>
+          Comparar
+        </button>
+      </div>
+    </section>
+
+    <!-- Empty state -->
+    <div class="empty-state" id="empty-state">
+      <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <rect x="3" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      <h3>Selecione duas análises para comparar</h3>
+      <p>Escolha uma versão base (A) e uma versão alvo (B) para visualizar as diferenças nos mapas de atenção e scores de UX.</p>
+    </div>
+
+    <!-- Comparison Result -->
+    <div class="comparison-result" id="comparison-result">
+      <!-- Summary -->
+      <section class="summary-section" data-od-id="summary">
+        <h2 class="summary-title">Resumo Executivo</h2>
+        <p class="summary-text">
+          A versão B apresenta melhorias significativas na visibilidade do CTA (+23 pontos) e na hierarquia visual (+12 pontos).
+          O novo layout concentra a atenção de forma mais eficiente na área acima da dobra, resultando em uma redução de 18 pontos
+          na poluição visual. Recomenda-se implementar a versão B como nova baseline.
+        </p>
+      </section>
+
+      <!-- Side by side heatmaps -->
+      <section class="heatmaps-section" data-od-id="heatmaps">
+        <div class="heatmap-card">
+          <div class="heatmap-header">
+            <div class="heatmap-label">
+              <span class="version-badge a">A</span>
+              <span class="heatmap-title">Landing page v1</span>
+            </div>
+            <span style="font-size: 11px; color: var(--muted);">17 jun 2026</span>
+          </div>
+          <div class="heatmap-canvas">
+            <div class="heatmap-overlay-a"></div>
+          </div>
+        </div>
+
+        <div class="heatmap-card">
+          <div class="heatmap-header">
+            <div class="heatmap-label">
+              <span class="version-badge b">B</span>
+              <span class="heatmap-title">https://acme.com/landing</span>
+            </div>
+            <span style="font-size: 11px; color: var(--muted);">19 jun 2026</span>
+          </div>
+          <div class="heatmap-canvas">
+            <div class="heatmap-overlay-b"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Delta table -->
+      <section class="delta-section" data-od-id="delta-table">
+        <h2 class="delta-title">Comparação de Scores</h2>
+        <table class="delta-table">
+          <thead>
+            <tr>
+              <th>Score</th>
+              <th class="num">Versão A</th>
+              <th class="num">Versão B</th>
+              <th class="num">Delta</th>
+              <th style="width: 200px;">Comparação</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Visibilidade do CTA</td>
+              <td class="num">19%</td>
+              <td class="num">42%</td>
+              <td class="num">
+                <span class="delta-indicator delta-positive">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 19V5M5 12l7-7 7 7"/>
+                  </svg>
+                  +23
+                </span>
+              </td>
+              <td>
+                <div class="score-bar-mini">
+                  <div class="bar-a" style="width: 19%"></div>
+                  <div class="bar-b" style="width: 42%"></div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Atenção na headline</td>
+              <td class="num">71%</td>
+              <td class="num">78%</td>
+              <td class="num">
+                <span class="delta-indicator delta-positive">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 19V5M5 12l7-7 7 7"/>
+                  </svg>
+                  +7
+                </span>
+              </td>
+              <td>
+                <div class="score-bar-mini">
+                  <div class="bar-a" style="width: 71%"></div>
+                  <div class="bar-b" style="width: 78%"></div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Hierarquia visual</td>
+              <td class="num">53%</td>
+              <td class="num">65%</td>
+              <td class="num">
+                <span class="delta-indicator delta-positive">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 19V5M5 12l7-7 7 7"/>
+                  </svg>
+                  +12
+                </span>
+              </td>
+              <td>
+                <div class="score-bar-mini">
+                  <div class="bar-a" style="width: 53%"></div>
+                  <div class="bar-b" style="width: 65%"></div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Competição por atenção</td>
+              <td class="num">72%</td>
+              <td class="num">58%</td>
+              <td class="num">
+                <span class="delta-indicator delta-positive">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12l7 7 7-7"/>
+                  </svg>
+                  -14
+                </span>
+              </td>
+              <td>
+                <div class="score-bar-mini">
+                  <div class="bar-a" style="width: 72%"></div>
+                  <div class="bar-b" style="width: 58%"></div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Eficiência acima da dobra</td>
+              <td class="num">64%</td>
+              <td class="num">71%</td>
+              <td class="num">
+                <span class="delta-indicator delta-positive">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 19V5M5 12l7-7 7 7"/>
+                  </svg>
+                  +7
+                </span>
+              </td>
+              <td>
+                <div class="score-bar-mini">
+                  <div class="bar-a" style="width: 64%"></div>
+                  <div class="bar-b" style="width: 71%"></div>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td>Poluição visual</td>
+              <td class="num">63%</td>
+              <td class="num">45%</td>
+              <td class="num">
+                <span class="delta-indicator delta-positive">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14M5 12l7 7 7-7"/>
+                  </svg>
+                  -18
+                </span>
+              </td>
+              <td>
+                <div class="score-bar-mini">
+                  <div class="bar-a" style="width: 63%"></div>
+                  <div class="bar-b" style="width: 45%"></div>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const versionA = document.getElementById('version-a');
+    const versionB = document.getElementById('version-b');
+    const compareBtn = document.getElementById('compare-btn');
+    const emptyState = document.getElementById('empty-state');
+    const comparisonResult = document.getElementById('comparison-result');
+
+    function updateCompareButton() {
+      compareBtn.disabled = !(versionA.value && versionB.value && versionA.value !== versionB.value);
+    }
+
+    versionA.addEventListener('change', updateCompareButton);
+    versionB.addEventListener('change', updateCompareButton);
+
+    compareBtn.addEventListener('click', () => {
+      if (versionA.value && versionB.value) {
+        gsap.to(emptyState, {
+          opacity: 0,
+          y: -20,
+          duration: 0.3,
+          onComplete: () => {
+            emptyState.style.display = 'none';
+            comparisonResult.classList.add('visible');
+            animateComparisonResult();
+          }
+        });
+      }
+    });
+
+    function animateComparisonResult() {
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+      // Summary section
+      tl.fromTo('.summary-section',
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.5 }
+      )
+      // Heatmap cards
+      .fromTo('.heatmap-card',
+        { opacity: 0, y: 20, scale: 0.96 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.15 },
+        '-=0.2'
+      )
+      // Heatmap overlays
+      .fromTo('.heatmap-overlay-a, .heatmap-overlay-b',
+        { opacity: 0 },
+        { opacity: 1, duration: 0.8 },
+        '-=0.3'
+      )
+      // Delta section
+      .fromTo('.delta-section',
+        { opacity: 0, y: 30 },
+        { opacity: 1, y: 0, duration: 0.5 },
+        '-=0.4'
+      )
+      // Animate bars
+      .add(() => {
+        document.querySelectorAll('.bar-a, .bar-b').forEach(bar => {
+          const width = bar.getAttribute('data-width');
+          gsap.to(bar, { width: width, duration: 0.6, ease: 'power2.out' });
+        });
+      }, '-=0.2');
+    }
+
+    // Store original widths
+    document.querySelectorAll('.bar-a, .bar-b').forEach(bar => {
+      const style = bar.getAttribute('style');
+      const widthMatch = style?.match(/width:\s*(\d+%)/);
+      if (widthMatch) {
+        bar.setAttribute('data-width', widthMatch[1]);
+      }
+    });
+
+    // GSAP Animations
+    document.addEventListener('DOMContentLoaded', () => {
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+      // Header
+      tl.fromTo('.header',
+        { opacity: 0, y: -20 },
+        { opacity: 1, y: 0, duration: 0.5 }
+      )
+      // Selection section
+      .fromTo('.selection-section',
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.5 },
+        '-=0.2'
+      )
+      // Empty state
+      .fromTo('.empty-state',
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, duration: 0.5 },
+        '-=0.3'
+      );
+
+      // Compare button hover
+      compareBtn.addEventListener('mouseenter', () => {
+        if (!compareBtn.disabled) {
+          gsap.to(compareBtn, { scale: 1.05, duration: 0.2 });
+        }
+      });
+      compareBtn.addEventListener('mouseleave', () => {
+        gsap.to(compareBtn, { scale: 1, duration: 0.2 });
+      });
+
+      // Heatmap card hover
+      document.querySelectorAll('.heatmap-card').forEach(card => {
+        card.addEventListener('mouseenter', () => {
+          gsap.to(card, { y: -4, duration: 0.25 });
+        });
+        card.addEventListener('mouseleave', () => {
+          gsap.to(card, { y: 0, duration: 0.25 });
+        });
+      });
+
+      // VS badge pulse
+      gsap.to('.vs-badge', {
+        scale: 1.1,
+        duration: 0.8,
+        repeat: -1,
+        yoyo: true,
+        ease: 'power1.inOut'
+      });
+    });
+  </script>
+</body>
+</html>
