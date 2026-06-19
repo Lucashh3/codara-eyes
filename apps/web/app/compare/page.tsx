@@ -9,8 +9,9 @@ type Option = { id: string; label: string; status: string };
 type Side = { id: string; title: string; scores: Record<string, number>; heatmapUrl: string | null };
 type Result = { summary: string; deltas: Record<string, number>; base: Side; target: Side };
 
-const fieldClasses =
-  "min-h-11 w-full rounded-2xl border border-[color:var(--border)] bg-white/70 px-4 text-base text-[var(--foreground)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]";
+const selectClasses =
+  "w-full appearance-none rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2.5 pr-8 text-sm text-[color:var(--foreground)] outline-none transition focus:border-[color:var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-soft)]";
+const labelClasses = "text-xs font-medium uppercase tracking-[0.05em] text-[color:var(--muted)]";
 
 export default function ComparePage() {
   const [options, setOptions] = useState<Option[]>([]);
@@ -39,6 +40,8 @@ export default function ComparePage() {
     })();
   }, []);
 
+  const canCompare = Boolean(baseId && targetId && baseId !== targetId);
+
   async function handleCompare(event: React.FormEvent) {
     event.preventDefault();
     setError(null);
@@ -64,92 +67,159 @@ export default function ComparePage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-6xl flex-col px-6 pb-16 pt-8 md:px-10 lg:px-12">
-      <Link href="/" className="text-sm text-[color:var(--muted)] hover:text-[var(--foreground)]">
-        ← Painel
-      </Link>
-
-      <header className="mt-6 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-6 shadow-[0_20px_60px_rgba(57,40,27,0.08)] backdrop-blur md:p-7">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--muted)]">Comparacao A/B</p>
-        <h1 className="mt-2 text-2xl font-semibold leading-tight md:text-3xl">Comparar duas analises</h1>
-
-        {options.length < 2 ? (
-          <p className="mt-4 text-sm leading-7 text-[color:var(--muted)]">
-            Voce precisa de pelo menos duas analises concluidas para comparar.
-          </p>
-        ) : (
-          <form onSubmit={handleCompare} className="mt-6 grid items-end gap-4 sm:grid-cols-[1fr_1fr_auto]">
-            <div>
-              <label htmlFor="base" className="block text-sm font-semibold">
-                Versao A (base)
-              </label>
-              <select id="base" value={baseId} onChange={(e) => setBaseId(e.target.value)} required className={`mt-2 ${fieldClasses}`}>
-                <option value="" disabled>
-                  Selecione...
-                </option>
-                {options.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="target" className="block text-sm font-semibold">
-                Versao B (alvo)
-              </label>
-              <select id="target" value={targetId} onChange={(e) => setTargetId(e.target.value)} required className={`mt-2 ${fieldClasses}`}>
-                <option value="" disabled>
-                  Selecione...
-                </option>
-                {options.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="min-h-11 rounded-2xl bg-[color:var(--accent-strong)] px-6 text-base font-semibold text-white transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {loading ? "Comparando..." : "Comparar"}
-            </button>
-          </form>
-        )}
-
-        {error ? (
-          <p role="alert" className="mt-4 text-sm font-medium text-[color:var(--danger)]">
-            {error}
-          </p>
-        ) : null}
+    <div className="flex min-h-dvh flex-col">
+      <header className="sticky top-0 z-50 flex items-center gap-4 border-b border-[color:var(--border)] bg-[color:var(--surface)] px-6 py-3">
+        <Link
+          href="/"
+          aria-label="Voltar ao painel"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[color:var(--border)] text-[color:var(--muted)] transition-colors hover:border-[color:var(--foreground)] hover:text-[color:var(--foreground)]"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+        </Link>
+        <h1 className="text-xl font-semibold">Comparação A/B</h1>
       </header>
 
-      {result ? <ComparisonResult result={result} /> : null}
-    </main>
+      <main className="mx-auto w-full max-w-[1400px] p-6">
+        {/* Selecao */}
+        <section className="mb-6 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-6">
+          {options.length < 2 ? (
+            <p className="text-sm leading-7 text-[color:var(--muted)]">
+              Você precisa de pelo menos duas análises concluídas para comparar.
+            </p>
+          ) : (
+            <form
+              onSubmit={handleCompare}
+              className="grid items-end gap-4 sm:grid-cols-[1fr_auto_1fr_auto]"
+            >
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="base" className={labelClasses}>
+                  Versão A (base)
+                </label>
+                <select
+                  id="base"
+                  value={baseId}
+                  onChange={(e) => setBaseId(e.target.value)}
+                  required
+                  className={selectClasses}
+                >
+                  <option value="" disabled>
+                    Selecione uma análise...
+                  </option>
+                  {options.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="hidden h-10 w-10 place-items-center self-end rounded-full bg-[color:var(--background)] text-xs font-semibold text-[color:var(--muted)] sm:grid">
+                VS
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label htmlFor="target" className={labelClasses}>
+                  Versão B (alvo)
+                </label>
+                <select
+                  id="target"
+                  value={targetId}
+                  onChange={(e) => setTargetId(e.target.value)}
+                  required
+                  className={selectClasses}
+                >
+                  <option value="" disabled>
+                    Selecione uma análise...
+                  </option>
+                  {options.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading || !canCompare}
+                className="rounded-lg bg-[color:var(--accent)] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[color:var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? "Comparando..." : "Comparar"}
+              </button>
+            </form>
+          )}
+
+          {error ? (
+            <p role="alert" className="mt-4 text-sm font-medium text-[color:var(--danger)]">
+              {error}
+            </p>
+          ) : null}
+        </section>
+
+        {result ? (
+          <ComparisonResult result={result} />
+        ) : (
+          <div className="px-6 py-16 text-center text-[color:var(--muted)]">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              className="mx-auto mb-4 h-16 w-16 text-[color:var(--border)]"
+            >
+              <rect x="3" y="3" width="7" height="7" rx="1" />
+              <rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" />
+              <rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+            <h3 className="mb-2 text-lg font-medium text-[color:var(--foreground)]">
+              Selecione duas análises para comparar
+            </h3>
+            <p className="mx-auto max-w-md text-sm">
+              Escolha uma versão base (A) e uma versão alvo (B) para visualizar as diferenças nos mapas de atenção e
+              scores de UX.
+            </p>
+          </div>
+        )}
+      </main>
+    </div>
   );
 }
 
 function ComparisonResult({ result }: { result: Result }) {
-  return (
-    <div className="mt-6 space-y-6">
-      <article className="rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-6 shadow-[0_20px_60px_rgba(57,40,27,0.08)] backdrop-blur md:p-7">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--muted)]">Resumo</p>
-        <p className="mt-3 text-base leading-8">{result.summary}</p>
-      </article>
+  const sides = [
+    { side: result.base, badge: "A", badgeClass: "bg-[oklch(55%_0.14_250)]" },
+    { side: result.target, badge: "B", badgeClass: "bg-[color:var(--accent)]" },
+  ];
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        {[result.base, result.target].map((side, index) => (
-          <article
+  return (
+    <div className="space-y-6">
+      {/* Resumo */}
+      <section className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-6">
+        <h2 className="mb-3 text-base font-semibold">Resumo Executivo</h2>
+        <p className="leading-relaxed text-[color:var(--muted)]">{result.summary}</p>
+      </section>
+
+      {/* Heatmaps lado a lado */}
+      <section className="grid gap-6 md:grid-cols-2">
+        {sides.map(({ side, badge, badgeClass }) => (
+          <div
             key={side.id}
-            className="rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-5 shadow-[0_20px_60px_rgba(57,40,27,0.08)] backdrop-blur"
+            className="overflow-hidden rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)]"
           >
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
-              {index === 0 ? "Versao A" : "Versao B"}
-            </p>
-            <p className="mt-1 truncate text-sm font-semibold">{side.title}</p>
-            <div className="mt-3 overflow-hidden rounded-[16px] border border-[color:var(--border)] bg-black/5">
+            <div className="flex items-center justify-between border-b border-[color:var(--border)] p-4">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`flex h-6 w-6 items-center justify-center rounded-md text-xs font-semibold text-white ${badgeClass}`}
+                >
+                  {badge}
+                </span>
+                <span className="max-w-[200px] truncate text-[13px] font-medium">{side.title}</span>
+              </div>
+            </div>
+            <div className="bg-[color:var(--background)]">
               {side.heatmapUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={side.heatmapUrl} alt={`Heatmap ${side.title}`} className="block w-full" />
@@ -157,49 +227,88 @@ function ComparisonResult({ result }: { result: Result }) {
                 <p className="p-6 text-sm text-[color:var(--muted)]">Sem heatmap.</p>
               )}
             </div>
-          </article>
+          </div>
         ))}
-      </div>
+      </section>
 
-      <article className="overflow-hidden rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] shadow-[0_20px_60px_rgba(57,40,27,0.08)] backdrop-blur">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-[color:var(--border)] text-left text-xs uppercase tracking-[0.14em] text-[color:var(--muted)]">
-              <th className="px-5 py-3 font-semibold">Score</th>
-              <th className="px-5 py-3 text-right font-semibold">A</th>
-              <th className="px-5 py-3 text-right font-semibold">B</th>
-              <th className="px-5 py-3 text-right font-semibold">Delta</th>
-            </tr>
-          </thead>
-          <tbody>
-            {SCORE_META.map((meta) => {
-              const delta = result.deltas[meta.key] ?? 0;
-              const improvement = (meta.betterHigh ? 1 : -1) * delta;
-              const color =
-                Math.abs(delta) < 0.005
+      {/* Tabela de delta */}
+      <section className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-6">
+        <h2 className="mb-4 text-base font-semibold">Comparação de Scores</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                {["Score", "Versão A", "Versão B", "Delta", "Comparação"].map((head, index) => (
+                  <th
+                    key={head}
+                    className={`border-b border-[color:var(--border)] px-4 py-3 text-[11px] font-medium uppercase tracking-[0.05em] text-[color:var(--muted)] ${
+                      index === 0 || index === 4 ? "text-left" : "text-right"
+                    }`}
+                  >
+                    {head}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {SCORE_META.map((meta) => {
+                const base = result.base.scores[meta.key] ?? 0;
+                const target = result.target.scores[meta.key] ?? 0;
+                const delta = result.deltas[meta.key] ?? 0;
+                const improvement = (meta.betterHigh ? 1 : -1) * delta;
+                const neutral = Math.abs(delta) < 0.005;
+                const color = neutral
                   ? "text-[color:var(--muted)]"
                   : improvement > 0
                     ? "text-[color:var(--success)]"
                     : "text-[color:var(--danger)]";
-              return (
-                <tr key={meta.key} className="border-b border-[color:var(--border)] last:border-0">
-                  <td className="px-5 py-3">{meta.label}</td>
-                  <td className="px-5 py-3 text-right tabular-nums">
-                    {Math.round((result.base.scores[meta.key] ?? 0) * 100)}
-                  </td>
-                  <td className="px-5 py-3 text-right tabular-nums">
-                    {Math.round((result.target.scores[meta.key] ?? 0) * 100)}
-                  </td>
-                  <td className={`px-5 py-3 text-right font-semibold tabular-nums ${color}`}>
-                    {delta > 0 ? "+" : ""}
-                    {Math.round(delta * 100)}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </article>
+                return (
+                  <tr key={meta.key}>
+                    <td className="border-b border-[color:var(--border)] px-4 py-3 text-sm">{meta.label}</td>
+                    <td className="border-b border-[color:var(--border)] px-4 py-3 text-right font-[family-name:var(--font-mono)] text-sm tabular-nums">
+                      {Math.round(base * 100)}%
+                    </td>
+                    <td className="border-b border-[color:var(--border)] px-4 py-3 text-right font-[family-name:var(--font-mono)] text-sm tabular-nums">
+                      {Math.round(target * 100)}%
+                    </td>
+                    <td
+                      className={`border-b border-[color:var(--border)] px-4 py-3 text-right font-[family-name:var(--font-mono)] text-sm font-semibold tabular-nums ${color}`}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        {!neutral ? (
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            className="h-3 w-3"
+                          >
+                            {delta > 0 ? <path d="M12 19V5M5 12l7-7 7 7" /> : <path d="M12 5v14M5 12l7 7 7-7" />}
+                          </svg>
+                        ) : null}
+                        {delta > 0 ? "+" : ""}
+                        {Math.round(delta * 100)}
+                      </span>
+                    </td>
+                    <td className="border-b border-[color:var(--border)] px-4 py-3" style={{ width: 200 }}>
+                      <div className="flex flex-col gap-1">
+                        <div
+                          className="h-1.5 rounded-full bg-[oklch(55%_0.14_250)]"
+                          style={{ width: `${Math.round(base * 100)}%` }}
+                        />
+                        <div
+                          className="h-1.5 rounded-full bg-[color:var(--accent)]"
+                          style={{ width: `${Math.round(target * 100)}%` }}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

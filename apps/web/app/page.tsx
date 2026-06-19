@@ -2,33 +2,32 @@ import Link from "next/link";
 
 import { Dashboard } from "../components/dashboard";
 import { LogoutButton } from "../components/logout-button";
-import { StatusPill } from "../components/status-pill";
 
 export default function HomePage() {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-7xl flex-col px-6 pb-16 pt-8 md:px-10 lg:px-12">
-      <header className="rounded-[32px] border border-[color:var(--border)] bg-[color:var(--surface)] p-6 shadow-[0_20px_70px_rgba(57,40,27,0.08)] backdrop-blur md:p-8">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-3xl">
-            <StatusPill label="Painel interno" tone="success" />
-            <h1 className="mt-4 text-3xl leading-tight md:text-4xl">Codara Eyes</h1>
-            <p className="mt-3 max-w-2xl text-base leading-8 text-[color:var(--muted)]">
-              Envie uma URL ou um screenshot e acompanhe o status da analise preditiva de atencao.
-            </p>
+    <div className="flex min-h-dvh flex-col">
+      <header className="sticky top-0 z-50 flex items-center justify-between border-b border-[color:var(--border)] bg-[color:var(--surface)] px-6 py-3">
+        <div className="flex items-center gap-2.5">
+          <div className="grid h-8 w-8 place-items-center rounded-md bg-[color:var(--accent)] text-white">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-[18px] w-[18px]">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 5c-4.5 0-8 3-9.5 7 1.5 4 5 7 9.5 7s8-3 9.5-7c-1.5-4-5-7-9.5-7z" />
+            </svg>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/compare"
-              className="min-h-11 rounded-full border border-[color:var(--border)] bg-white/60 px-5 text-sm font-medium leading-[44px] text-[color:var(--accent-strong)] outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
-            >
-              Comparar A/B
-            </Link>
-            <LogoutButton />
-          </div>
+          <span className="text-base font-semibold tracking-[-0.02em]">Codara Eyes</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/compare"
+            className="inline-flex items-center rounded-lg border border-[color:var(--border)] bg-transparent px-3.5 py-2 text-[13px] font-medium text-[color:var(--foreground)] transition-colors hover:border-[color:var(--foreground)]"
+          >
+            Comparar A/B
+          </Link>
+          <LogoutButton />
         </div>
       </header>
 
       <Dashboard />
-    </main>
+    </div>
   );
 }

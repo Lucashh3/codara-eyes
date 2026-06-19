@@ -62,10 +62,44 @@ const ELEMENT_LABELS: Record<string, string> = {
   text_block: "Bloco de texto",
 };
 const ELEMENT_COLORS: Record<string, string> = {
-  cta: "var(--accent-strong)",
-  headline: "var(--success)",
-  subheadline: "var(--accent)",
+  cta: "oklch(55% 0.16 25)",
+  headline: "oklch(50% 0.14 145)",
+  subheadline: "oklch(60% 0.14 85)",
 };
+const ELEMENT_BADGE: Record<string, string> = {
+  headline: "bg-[oklch(92%_0.06_145)] text-[oklch(50%_0.14_145)]",
+  subheadline: "bg-[oklch(92%_0.06_85)] text-[oklch(50%_0.14_85)]",
+  cta: "bg-[oklch(92%_0.06_25)] text-[oklch(55%_0.16_25)]",
+  other: "bg-[color:var(--background)] text-[color:var(--muted)]",
+};
+
+function BackButton() {
+  return (
+    <Link
+      href="/"
+      aria-label="Voltar ao painel"
+      className="flex h-8 w-8 items-center justify-center rounded-lg border border-[color:var(--border)] text-[color:var(--muted)] transition-colors hover:border-[color:var(--foreground)] hover:text-[color:var(--foreground)]"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-4 w-4">
+        <path d="M19 12H5M12 19l-7-7 7-7" />
+      </svg>
+    </Link>
+  );
+}
+
+function HeaderBar({ children }: { children: React.ReactNode }) {
+  return (
+    <header className="sticky top-0 z-50 flex items-center justify-between gap-4 border-b border-[color:var(--border)] bg-[color:var(--surface)] px-6 py-3">
+      {children}
+    </header>
+  );
+}
+
+function Section({ children }: { children: React.ReactNode }) {
+  return (
+    <section className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-6">{children}</section>
+  );
+}
 
 export function AnalysisDetail({ id }: { id: string }) {
   const [data, setData] = useState<Payload | null>(null);
@@ -107,17 +141,29 @@ export function AnalysisDetail({ id }: { id: string }) {
 
   if (notFound) {
     return (
-      <BackShell>
-        <p className="text-base font-semibold">Analise nao encontrada.</p>
-      </BackShell>
+      <div className="flex min-h-dvh flex-col">
+        <HeaderBar>
+          <BackButton />
+        </HeaderBar>
+        <main className="mx-auto w-full max-w-[1400px] p-6">
+          <Section>
+            <p className="text-base font-semibold">Analise nao encontrada.</p>
+          </Section>
+        </main>
+      </div>
     );
   }
 
   if (!loaded || !data) {
     return (
-      <BackShell>
-        <p className="text-sm text-[color:var(--muted)]">Carregando...</p>
-      </BackShell>
+      <div className="flex min-h-dvh flex-col">
+        <HeaderBar>
+          <BackButton />
+        </HeaderBar>
+        <main className="mx-auto w-full max-w-[1400px] p-6">
+          <p className="text-sm text-[color:var(--muted)]">Carregando...</p>
+        </main>
+      </div>
     );
   }
 
@@ -125,265 +171,292 @@ export function AnalysisDetail({ id }: { id: string }) {
   const title = analysis.sourceLabel || analysis.url || "Upload de imagem";
   const viewport = viewports[viewportIndex] ?? viewports[0];
 
-  const availableLayers = viewport
-    ? LAYER_ORDER.filter((key) => viewport.artifacts[key])
-    : [];
+  const availableLayers = viewport ? LAYER_ORDER.filter((key) => viewport.artifacts[key]) : [];
   const activeLayer = availableLayers.includes(layer) ? layer : availableLayers[0];
   const imageUrl = viewport && activeLayer ? viewport.artifacts[activeLayer] : undefined;
   const boxesVisible = showBoxes && activeLayer !== "source";
 
   return (
-    <div className="mt-8 space-y-6">
-      <div>
-        <Link href="/" className="text-sm text-[color:var(--muted)] hover:text-[var(--foreground)]">
-          ← Painel
-        </Link>
-      </div>
-
-      <header className="rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-6 shadow-[0_20px_60px_rgba(57,40,27,0.08)] backdrop-blur md:p-7">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            <h1 className="truncate text-2xl font-semibold leading-tight md:text-3xl">{title}</h1>
-            <p className="mt-2 text-sm text-[color:var(--muted)]">
-              {analysis.pageType} · {analysis.goal} ·{" "}
-              <span className="tabular-nums">{new Date(analysis.createdAt).toLocaleString("pt-BR")}</span>
-            </p>
-          </div>
-          <StatusBadge status={analysis.status} />
-        </div>
-      </header>
-
-      {analysis.status === "failed" ? (
-        <Card>
-          <p className="text-base font-semibold text-[color:var(--danger)]">A analise falhou.</p>
-          {analysis.error ? (
-            <p className="mt-2 text-sm text-[color:var(--muted)]">{analysis.error}</p>
-          ) : null}
-        </Card>
-      ) : analysis.status !== "completed" ? (
-        <Card>
-          <p className="text-base font-semibold">Analise em andamento</p>
-          <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-            Os mapas de atencao, scores e o relatorio aparecem aqui assim que o processamento terminar.
-            A pagina atualiza sozinha.
-          </p>
-        </Card>
-      ) : (
-        <>
-          {report ? (
-            <Card>
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--muted)]">
-                  Relatorio
-                </p>
-                <span className="rounded-full bg-black/5 px-3 py-1 text-xs text-[color:var(--muted)]">
-                  {report.modelName}
-                </span>
-              </div>
-              <p className="mt-3 text-base leading-8">{report.summary}</p>
-              <div className="mt-5 grid gap-5 md:grid-cols-3">
-                <ReportList title="Problemas prioritarios" items={report.issues} />
-                <ReportList title="Recomendacoes" items={report.recommendations} />
-                <ReportList title="Hipoteses de teste" items={report.abTestHypotheses} />
-              </div>
-            </Card>
-          ) : null}
-
-          {viewports.length > 1 ? (
-            <div className="flex gap-2" role="tablist" aria-label="Viewport">
-              {viewports.map((vp, index) => (
-                <button
-                  key={vp.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={index === viewportIndex}
-                  onClick={() => {
-                    setViewportIndex(index);
-                    setImgSize(null);
-                  }}
-                  className={`min-h-11 rounded-full border px-5 text-sm font-medium ${
-                    index === viewportIndex
-                      ? "border-[color:var(--accent)] bg-[color:var(--accent)]/12 text-[color:var(--accent-strong)]"
-                      : "border-[color:var(--border)] bg-white/60 text-[color:var(--muted)]"
-                  }`}
-                >
-                  {vp.type === "mobile" ? "Mobile" : "Desktop"}
-                </button>
-              ))}
+    <div className="flex min-h-dvh flex-col">
+      <HeaderBar>
+        <div className="flex min-w-0 items-center gap-4">
+          <BackButton />
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <h1 className="truncate text-xl font-semibold">{title}</h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded bg-[color:var(--background)] px-1.5 py-0.5 text-[11px] text-[color:var(--muted)]">
+                {analysis.pageType}
+              </span>
+              <span className="rounded bg-[color:var(--background)] px-1.5 py-0.5 text-[11px] text-[color:var(--muted)]">
+                {analysis.goal}
+              </span>
+              <span className="font-[family-name:var(--font-mono)] text-[11px] text-[color:var(--muted)]">
+                {new Date(analysis.createdAt).toLocaleString("pt-BR")}
+              </span>
             </div>
-          ) : null}
+          </div>
+        </div>
+        <StatusBadge status={analysis.status} />
+      </HeaderBar>
 
-          {viewport ? (
-            <div className="grid gap-6 lg:grid-cols-[1.25fr_1fr]">
-              {/* Imagem + overlay */}
-              <Card>
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex flex-wrap gap-2" role="group" aria-label="Camada">
-                    {availableLayers.map((key) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => setLayer(key)}
-                        aria-pressed={key === activeLayer}
-                        className={`min-h-9 rounded-full px-4 text-xs font-semibold ${
-                          key === activeLayer
-                            ? "bg-[color:var(--accent-strong)] text-white"
-                            : "bg-black/5 text-[color:var(--muted)]"
+      <main className="mx-auto w-full max-w-[1400px] space-y-6 p-6">
+        {analysis.status === "failed" ? (
+          <Section>
+            <p className="text-base font-semibold text-[color:var(--danger)]">A analise falhou.</p>
+            {analysis.error ? <p className="mt-2 text-sm text-[color:var(--muted)]">{analysis.error}</p> : null}
+          </Section>
+        ) : analysis.status !== "completed" ? (
+          <Section>
+            <p className="text-base font-semibold">Analise em andamento</p>
+            <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+              Os mapas de atencao, scores e o relatorio aparecem aqui assim que o processamento terminar. A pagina
+              atualiza sozinha.
+            </p>
+          </Section>
+        ) : (
+          <>
+            {report ? (
+              <Section>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <h2 className="flex items-center gap-2 text-base font-semibold">
+                    Relatório com IA
+                    <span className="rounded bg-[color:var(--background)] px-1.5 py-0.5 font-[family-name:var(--font-mono)] text-[10px] text-[color:var(--muted)]">
+                      {report.modelName}
+                    </span>
+                  </h2>
+                </div>
+                <p className="mb-6 leading-relaxed text-[color:var(--muted)]">{report.summary}</p>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <ReportCard
+                    tone="text-[color:var(--danger)]"
+                    title="Problemas Prioritários"
+                    items={report.issues}
+                  />
+                  <ReportCard
+                    tone="text-[color:var(--accent)]"
+                    title="Recomendações"
+                    items={report.recommendations}
+                  />
+                  <ReportCard
+                    tone="text-[oklch(55%_0.14_280)]"
+                    title="Hipóteses de Teste A/B"
+                    items={report.abTestHypotheses}
+                  />
+                </div>
+              </Section>
+            ) : null}
+
+            {viewports.length > 1 ? (
+              <div className="inline-flex rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] p-1" role="tablist" aria-label="Viewport">
+                {viewports.map((vp, index) => (
+                  <button
+                    key={vp.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={index === viewportIndex}
+                    onClick={() => {
+                      setViewportIndex(index);
+                      setImgSize(null);
+                    }}
+                    className={`rounded-md px-4 py-2 text-[13px] font-medium transition-colors ${
+                      index === viewportIndex
+                        ? "bg-[color:var(--accent)] text-white"
+                        : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]"
+                    }`}
+                  >
+                    {vp.type === "mobile" ? "Mobile" : "Desktop"}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+
+            {viewport ? (
+              <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
+                {/* Imagem + overlay */}
+                <div className="overflow-hidden rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)]">
+                  <div className="flex items-center justify-between gap-3 border-b border-[color:var(--border)] px-4 py-3">
+                    <div className="flex flex-wrap gap-1" role="group" aria-label="Camada">
+                      {availableLayers.map((key) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setLayer(key)}
+                          aria-pressed={key === activeLayer}
+                          className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                            key === activeLayer
+                              ? "border-[color:var(--foreground)] bg-[color:var(--foreground)] text-[color:var(--surface)]"
+                              : "border-[color:var(--border)] text-[color:var(--muted)] hover:border-[color:var(--foreground)]"
+                          }`}
+                        >
+                          {LAYER_LABELS[key] ?? key}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={showBoxes}
+                      onClick={() => setShowBoxes((value) => !value)}
+                      className="flex items-center gap-2 text-xs text-[color:var(--muted)]"
+                    >
+                      <span>Elementos</span>
+                      <span
+                        className={`relative h-5 w-9 rounded-full transition-colors ${
+                          showBoxes ? "bg-[color:var(--accent)]" : "bg-[color:var(--border)]"
                         }`}
                       >
-                        {LAYER_LABELS[key] ?? key}
-                      </button>
-                    ))}
+                        <span
+                          className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform ${
+                            showBoxes ? "translate-x-4" : ""
+                          }`}
+                        />
+                      </span>
+                    </button>
                   </div>
-                  <label className="flex items-center gap-2 text-xs text-[color:var(--muted)]">
-                    <input
-                      type="checkbox"
-                      checked={showBoxes}
-                      onChange={(event) => setShowBoxes(event.target.checked)}
-                    />
-                    Elementos
-                  </label>
+
+                  <div className="relative bg-[color:var(--background)]">
+                    {imageUrl ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={imageUrl}
+                          alt={`${activeLayer} do viewport ${viewport.type}`}
+                          className="block w-full"
+                          onLoad={(event) =>
+                            setImgSize({
+                              w: event.currentTarget.naturalWidth,
+                              h: event.currentTarget.naturalHeight,
+                            })
+                          }
+                        />
+                        {boxesVisible && imgSize
+                          ? viewport.elements.map((element, index) => (
+                              <span
+                                key={index}
+                                title={`${ELEMENT_LABELS[element.elementType] ?? element.elementType}${
+                                  element.label ? `: ${element.label}` : ""
+                                }`}
+                                className="pointer-events-none absolute rounded border-2"
+                                style={{
+                                  left: `${(element.bbox.x / imgSize.w) * 100}%`,
+                                  top: `${(element.bbox.y / imgSize.h) * 100}%`,
+                                  width: `${(element.bbox.w / imgSize.w) * 100}%`,
+                                  height: `${(element.bbox.h / imgSize.h) * 100}%`,
+                                  borderColor: ELEMENT_COLORS[element.elementType] ?? "var(--muted)",
+                                }}
+                              />
+                            ))
+                          : null}
+                      </>
+                    ) : (
+                      <p className="p-8 text-sm text-[color:var(--muted)]">Imagem indisponivel.</p>
+                    )}
+                  </div>
                 </div>
 
-                <div className="relative mt-4 overflow-hidden rounded-[18px] border border-[color:var(--border)] bg-black/5">
-                  {imageUrl ? (
-                    <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={imageUrl}
-                        alt={`${activeLayer} do viewport ${viewport.type}`}
-                        className="block w-full"
-                        onLoad={(event) =>
-                          setImgSize({
-                            w: event.currentTarget.naturalWidth,
-                            h: event.currentTarget.naturalHeight,
-                          })
-                        }
-                      />
-                      {boxesVisible && imgSize
-                        ? viewport.elements.map((element, index) => (
-                            <span
-                              key={index}
-                              title={`${ELEMENT_LABELS[element.elementType] ?? element.elementType}${
-                                element.label ? `: ${element.label}` : ""
-                              }`}
-                              className="pointer-events-none absolute rounded-sm border-2"
-                              style={{
-                                left: `${(element.bbox.x / imgSize.w) * 100}%`,
-                                top: `${(element.bbox.y / imgSize.h) * 100}%`,
-                                width: `${(element.bbox.w / imgSize.w) * 100}%`,
-                                height: `${(element.bbox.h / imgSize.h) * 100}%`,
-                                borderColor: ELEMENT_COLORS[element.elementType] ?? "var(--muted)",
-                              }}
-                            />
-                          ))
-                        : null}
-                    </>
+                {/* Scorecard */}
+                <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-6">
+                  <h3 className="mb-4 text-base font-semibold">Scorecard de UX</h3>
+                  {viewport.scores ? (
+                    <div className="flex flex-col gap-3">
+                      {SCORE_META.map((meta) => (
+                        <ScoreCard
+                          key={meta.key}
+                          label={meta.label}
+                          value={viewport.scores?.[meta.key] ?? 0}
+                          betterHigh={meta.betterHigh}
+                        />
+                      ))}
+                    </div>
                   ) : (
-                    <p className="p-8 text-sm text-[color:var(--muted)]">Imagem indisponivel.</p>
+                    <p className="text-sm text-[color:var(--muted)]">Scores indisponiveis.</p>
                   )}
                 </div>
-              </Card>
+              </div>
+            ) : null}
 
-              {/* Scores */}
-              <Card>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--muted)]">
-                  Scores de UX
-                </p>
-                {viewport.scores ? (
-                  <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                    {SCORE_META.map((meta) => (
-                      <ScoreCard
-                        key={meta.key}
-                        label={meta.label}
-                        value={viewport.scores?.[meta.key] ?? 0}
-                        betterHigh={meta.betterHigh}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="mt-4 text-sm text-[color:var(--muted)]">Scores indisponiveis.</p>
-                )}
-              </Card>
-            </div>
-          ) : null}
-
-          {viewport && viewport.elements.length > 0 ? (
-            <Card>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--muted)]">
-                Elementos detectados
-              </p>
-              <ul className="mt-4 space-y-2">
-                {viewport.elements.map((element, index) => (
-                  <li
-                    key={index}
-                    className="flex items-center justify-between gap-3 rounded-[16px] border border-[color:var(--border)] bg-white/60 px-4 py-3"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold">
-                        {ELEMENT_LABELS[element.elementType] ?? element.elementType}
-                      </p>
-                      {element.label ? (
-                        <p className="truncate text-xs text-[color:var(--muted)]">{element.label}</p>
-                      ) : null}
-                    </div>
-                    <div className="flex shrink-0 items-center gap-3 text-xs text-[color:var(--muted)]">
-                      <span className="tabular-nums">
-                        {Math.round((element.attentionShare ?? 0) * 100)}% atencao
-                      </span>
-                      {element.aboveFold ? (
-                        <span className="rounded-full bg-[color:var(--success)]/12 px-2 py-0.5 text-[color:var(--success)]">
-                          above-fold
-                        </span>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          ) : null}
-        </>
-      )}
+            {viewport && viewport.elements.length > 0 ? (
+              <Section>
+                <h3 className="mb-4 text-base font-semibold">Elementos Detectados</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-[13px]">
+                    <thead>
+                      <tr>
+                        <th className="border-b border-[color:var(--border)] px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-[0.05em] text-[color:var(--muted)]">
+                          Tipo
+                        </th>
+                        <th className="border-b border-[color:var(--border)] px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-[0.05em] text-[color:var(--muted)]">
+                          Conteúdo
+                        </th>
+                        <th className="border-b border-[color:var(--border)] px-3 py-2.5 text-right text-[11px] font-medium uppercase tracking-[0.05em] text-[color:var(--muted)]">
+                          Share de Atenção
+                        </th>
+                        <th className="border-b border-[color:var(--border)] px-3 py-2.5 text-left text-[11px] font-medium uppercase tracking-[0.05em] text-[color:var(--muted)]">
+                          Posição
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {viewport.elements.map((element, index) => {
+                        const badge = ELEMENT_BADGE[element.elementType] ?? ELEMENT_BADGE.other;
+                        return (
+                          <tr key={index}>
+                            <td className="border-b border-[color:var(--border)] px-3 py-2.5">
+                              <span
+                                className={`inline-flex rounded px-1.5 py-0.5 text-[11px] font-medium uppercase ${badge}`}
+                              >
+                                {ELEMENT_LABELS[element.elementType] ?? element.elementType}
+                              </span>
+                            </td>
+                            <td className="border-b border-[color:var(--border)] px-3 py-2.5 text-[color:var(--muted)]">
+                              {element.label || "—"}
+                            </td>
+                            <td className="border-b border-[color:var(--border)] px-3 py-2.5 text-right font-[family-name:var(--font-mono)] tabular-nums">
+                              {Math.round((element.attentionShare ?? 0) * 100)}%
+                            </td>
+                            <td className="border-b border-[color:var(--border)] px-3 py-2.5">
+                              {element.aboveFold ? (
+                                <span className="rounded bg-[color:var(--accent-soft)] px-1.5 py-0.5 text-[10px] text-[color:var(--accent)]">
+                                  Above fold
+                                </span>
+                              ) : (
+                                <span className="rounded bg-black/[0.04] px-1.5 py-0.5 text-[10px] text-[color:var(--muted)]">
+                                  Below fold
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </Section>
+            ) : null}
+          </>
+        )}
+      </main>
     </div>
   );
 }
 
-function Card({ children }: { children: React.ReactNode }) {
+function ReportCard({ tone, title, items }: { tone: string; title: string; items: string[] }) {
   return (
-    <article className="rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-6 shadow-[0_20px_60px_rgba(57,40,27,0.08)] backdrop-blur md:p-7">
-      {children}
-    </article>
-  );
-}
-
-function BackShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="mt-8 space-y-6">
-      <Link href="/" className="text-sm text-[color:var(--muted)] hover:text-[var(--foreground)]">
-        ← Painel
-      </Link>
-      <Card>{children}</Card>
-    </div>
-  );
-}
-
-function ReportList({ title, items }: { title: string; items: string[] }) {
-  return (
-    <div>
-      <p className="text-sm font-semibold">{title}</p>
+    <div className="rounded-lg bg-[color:var(--background)] p-4">
+      <h3 className={`mb-3 text-xs font-semibold uppercase tracking-[0.05em] ${tone}`}>{title}</h3>
       {items.length > 0 ? (
-        <ul className="mt-2 space-y-2 text-sm leading-6 text-[color:var(--muted)]">
+        <ul className="m-0 list-none p-0">
           {items.map((item, index) => (
-            <li key={index} className="flex gap-2">
-              <span aria-hidden="true" className="text-[color:var(--accent-strong)]">
-                •
-              </span>
+            <li
+              key={index}
+              className="border-b border-[color:var(--border)] py-2 text-[13px] leading-relaxed last:border-b-0"
+            >
               {item}
             </li>
           ))}
         </ul>
       ) : (
-        <p className="mt-2 text-sm text-[color:var(--muted)]">—</p>
+        <p className="text-[13px] text-[color:var(--muted)]">—</p>
       )}
     </div>
   );

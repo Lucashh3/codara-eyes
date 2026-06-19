@@ -42,8 +42,10 @@ const GOAL_LABELS: Record<AnalysisGoal, string> = {
 const TERMINAL: AnalysisStatus[] = ["completed", "failed"];
 const POLL_MS = 4000;
 
-const fieldClasses =
-  "min-h-11 w-full rounded-2xl border border-[color:var(--border)] bg-white/70 px-4 text-base text-[var(--foreground)] outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]";
+const inputClasses =
+  "w-full rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2.5 text-sm text-[color:var(--foreground)] outline-none transition placeholder:text-[color:var(--muted)] focus:border-[color:var(--accent)] focus:shadow-[0_0_0_3px_var(--accent-soft)]";
+const sectionTitleClasses =
+  "mb-3 text-xs font-medium uppercase tracking-[0.05em] text-[color:var(--muted)]";
 
 export function Dashboard() {
   const [analyses, setAnalyses] = useState<AnalysisRow[]>([]);
@@ -149,137 +151,158 @@ export function Dashboard() {
   const hasActive = analyses.some((item) => !TERMINAL.includes(item.status));
 
   return (
-    <section className="mt-8 grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-      {/* Formulario de nova analise */}
-      <article className="rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-6 shadow-[0_20px_60px_rgba(57,40,27,0.08)] backdrop-blur md:p-7">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--muted)]">Nova analise</p>
-        <h2 className="mt-2 text-2xl font-semibold leading-tight">Enviar pagina para analise</h2>
+    <main className="grid flex-1 lg:grid-cols-[420px_1fr]">
+      {/* Painel esquerdo: nova analise */}
+      <aside className="overflow-y-auto border-b border-[color:var(--border)] bg-[color:var(--surface)] p-6 lg:border-b-0 lg:border-r">
+        <h2 className="mb-6 text-lg font-semibold tracking-[-0.01em]">Nova Análise</h2>
 
-        <form onSubmit={handleSubmit} className="mt-6 space-y-5" noValidate>
-          <fieldset>
-            <legend className="text-sm font-semibold">Origem</legend>
-            <div className="mt-2 grid grid-cols-2 gap-2" role="radiogroup" aria-label="Tipo de entrada">
+        <form onSubmit={handleSubmit} noValidate>
+          {/* Origem */}
+          <div className="mb-6">
+            <div className={sectionTitleClasses}>Origem</div>
+            <div
+              className="mb-4 flex gap-1 rounded-lg bg-[color:var(--background)] p-1"
+              role="radiogroup"
+              aria-label="Tipo de entrada"
+            >
               {(["url", "image"] as const).map((option) => {
                 const active = inputType === option;
                 return (
-                  <label
+                  <button
                     key={option}
-                    className={`flex min-h-11 cursor-pointer items-center justify-center rounded-2xl border px-4 text-sm font-medium transition-colors ${
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setInputType(option)}
+                    className={`flex-1 rounded-md px-3 py-2 text-[13px] font-medium transition-colors ${
                       active
-                        ? "border-[color:var(--accent)] bg-[color:var(--accent)]/12 text-[color:var(--accent-strong)]"
-                        : "border-[color:var(--border)] bg-white/60 text-[color:var(--muted)]"
+                        ? "bg-[color:var(--surface)] text-[color:var(--foreground)] shadow-[0_1px_2px_rgba(0,0,0,0.05)]"
+                        : "text-[color:var(--muted)] hover:text-[color:var(--foreground)]"
                     }`}
                   >
-                    <input
-                      type="radio"
-                      name="inputType"
-                      value={option}
-                      checked={active}
-                      onChange={() => setInputType(option)}
-                      className="sr-only"
-                    />
-                    {option === "url" ? "URL" : "Imagem (PNG/JPG)"}
-                  </label>
+                    {option === "url" ? "URL" : "Imagem"}
+                  </button>
                 );
               })}
             </div>
-          </fieldset>
 
-          {inputType === "url" ? (
-            <div>
-              <label htmlFor="url" className="block text-sm font-semibold">
-                URL da pagina <span className="text-[color:var(--accent-strong)]">*</span>
-              </label>
-              <input
-                id="url"
-                type="url"
-                inputMode="url"
-                placeholder="https://exemplo.com"
-                value={url}
-                onChange={(event) => setUrl(event.target.value)}
-                className={`mt-2 ${fieldClasses}`}
-              />
-              <p className="mt-1.5 text-xs text-[color:var(--muted)]">Capturamos desktop e mobile automaticamente.</p>
-            </div>
-          ) : (
-            <div>
-              <label htmlFor="file" className="block text-sm font-semibold">
-                Arquivo PNG/JPG <span className="text-[color:var(--accent-strong)]">*</span>
-              </label>
-              <input
-                id="file"
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg"
-                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-                className="mt-2 block w-full text-sm text-[color:var(--muted)] file:mr-4 file:min-h-11 file:rounded-2xl file:border-0 file:bg-[color:var(--accent-strong)] file:px-5 file:text-sm file:font-semibold file:text-white"
-              />
-              <p className="mt-1.5 text-xs text-[color:var(--muted)]">
-                {file ? `Selecionado: ${file.name}` : "Ate 10 MB. Screenshot da pagina inteira funciona melhor."}
-              </p>
-            </div>
-          )}
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="pageType" className="block text-sm font-semibold">
-                Tipo de pagina
-              </label>
-              <select
-                id="pageType"
-                value={pageType}
-                onChange={(event) => setPageType(event.target.value as PageType)}
-                className={`mt-2 ${fieldClasses}`}
-              >
-                {pageTypeOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {PAGE_TYPE_LABELS[option]}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label htmlFor="goal" className="block text-sm font-semibold">
-                Objetivo
-              </label>
-              <select
-                id="goal"
-                value={goal}
-                onChange={(event) => setGoal(event.target.value as AnalysisGoal)}
-                className={`mt-2 ${fieldClasses}`}
-              >
-                {analysisGoalOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {GOAL_LABELS[option]}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {inputType === "url" ? (
+              <>
+                <input
+                  id="url"
+                  type="url"
+                  inputMode="url"
+                  placeholder="https://exemplo.com/landing"
+                  value={url}
+                  onChange={(event) => setUrl(event.target.value)}
+                  className={inputClasses}
+                />
+                <p className="mt-1.5 text-xs text-[color:var(--muted)]">
+                  Capturamos desktop e mobile automaticamente.
+                </p>
+              </>
+            ) : (
+              <>
+                <label
+                  htmlFor="file"
+                  className="flex cursor-pointer flex-col items-center rounded-lg border-2 border-dashed border-[color:var(--border)] px-4 py-6 text-center transition-colors hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)]"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                    className="mb-2 h-10 w-10 text-[color:var(--muted)]"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                  </svg>
+                  <span className="text-[13px] text-[color:var(--muted)]">
+                    <strong className="text-[color:var(--accent)]">Clique para enviar</strong> ou arraste uma imagem
+                    <br />
+                    <span className="text-[11px]">PNG, JPG até 10 MB</span>
+                  </span>
+                </label>
+                <input
+                  id="file"
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+                  className="sr-only"
+                />
+                {file ? (
+                  <p className="mt-1.5 text-xs text-[color:var(--muted)]">Selecionado: {file.name}</p>
+                ) : null}
+              </>
+            )}
           </div>
 
-          <div>
-            <label htmlFor="sourceLabel" className="block text-sm font-semibold">
-              Rotulo <span className="font-normal text-[color:var(--muted)]">(opcional)</span>
-            </label>
-            <input
-              id="sourceLabel"
-              type="text"
-              maxLength={120}
-              placeholder="Ex.: Home v2"
-              value={sourceLabel}
-              onChange={(event) => setSourceLabel(event.target.value)}
-              className={`mt-2 ${fieldClasses}`}
-            />
+          {/* Configuracao */}
+          <div className="mb-6">
+            <div className={sectionTitleClasses}>Configuração</div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="pageType" className="mb-1 block text-xs text-[color:var(--muted)]">
+                  Tipo de página
+                </label>
+                <select
+                  id="pageType"
+                  value={pageType}
+                  onChange={(event) => setPageType(event.target.value as PageType)}
+                  className={`${inputClasses} cursor-pointer appearance-none`}
+                >
+                  {pageTypeOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {PAGE_TYPE_LABELS[option]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="goal" className="mb-1 block text-xs text-[color:var(--muted)]">
+                  Objetivo
+                </label>
+                <select
+                  id="goal"
+                  value={goal}
+                  onChange={(event) => setGoal(event.target.value as AnalysisGoal)}
+                  className={`${inputClasses} cursor-pointer appearance-none`}
+                >
+                  {analysisGoalOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {GOAL_LABELS[option]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label htmlFor="sourceLabel" className="mb-1 block text-xs text-[color:var(--muted)]">
+                Rótulo (opcional)
+              </label>
+              <input
+                id="sourceLabel"
+                type="text"
+                maxLength={120}
+                placeholder="Ex: Teste homepage v2"
+                value={sourceLabel}
+                onChange={(event) => setSourceLabel(event.target.value)}
+                className={inputClasses}
+              />
+              <div className="mt-1 text-right text-[11px] text-[color:var(--muted)]">{sourceLabel.length}/120</div>
+            </div>
           </div>
 
           {formError ? (
-            <p role="alert" className="text-sm font-medium text-[color:var(--danger)]">
+            <p role="alert" className="mb-3 text-sm font-medium text-[color:var(--danger)]">
               {formError}
             </p>
           ) : null}
           {formSuccess ? (
-            <p role="status" className="text-sm font-medium text-[color:var(--success)]">
+            <p role="status" className="mb-3 text-sm font-medium text-[color:var(--success)]">
               {formSuccess}
             </p>
           ) : null}
@@ -287,69 +310,76 @@ export function Dashboard() {
           <button
             type="submit"
             disabled={submitting}
-            className="min-h-11 w-full rounded-2xl bg-[color:var(--accent-strong)] px-6 text-base font-semibold text-white transition-opacity hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-lg bg-[color:var(--accent)] px-4 py-3 text-sm font-medium text-white transition hover:bg-[color:var(--accent-strong)] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {submitting ? "Enviando..." : "Criar analise"}
+            {submitting ? "Enviando..." : "Criar análise"}
           </button>
         </form>
-      </article>
+      </aside>
 
-      {/* Lista de analises */}
-      <article className="rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface)] p-6 shadow-[0_20px_60px_rgba(57,40,27,0.08)] backdrop-blur md:p-7">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--muted)]">Pipeline</p>
-            <h2 className="mt-2 text-2xl font-semibold leading-tight">Analises recentes</h2>
-          </div>
-          <span role="status" aria-live="polite" className="text-xs text-[color:var(--muted)]">
-            {refreshing && loaded ? "Atualizando..." : hasActive ? "Em andamento" : ""}
-          </span>
-        </div>
-
-        <div className="mt-6">
-          {!loaded ? (
-            <p className="text-sm text-[color:var(--muted)]">Carregando...</p>
-          ) : analyses.length === 0 ? (
-            <div className="rounded-[20px] border border-dashed border-[color:var(--border)] bg-white/40 p-8 text-center">
-              <p className="text-base font-semibold">Nenhuma analise ainda</p>
-              <p className="mx-auto mt-2 max-w-xs text-sm leading-7 text-[color:var(--muted)]">
-                Envie uma URL ou um screenshot ao lado para criar a primeira analise.
-              </p>
+      {/* Painel direito: lista */}
+      <section className="overflow-y-auto p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Análises Recentes</h2>
+          {(refreshing && loaded) || hasActive ? (
+            <div role="status" aria-live="polite" className="flex items-center gap-1.5 text-xs text-[color:var(--muted)]">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[color:var(--success)] motion-reduce:animate-none" />
+              <span>{refreshing && loaded ? "Atualizando..." : "Em andamento"}</span>
             </div>
-          ) : (
-            <ul className="space-y-3">
-              {analyses.map((item) => (
-                <li key={item.id}>
-                  <Link
-                    href={`/analyses/${item.id}`}
-                    className="block rounded-[20px] border border-[color:var(--border)] bg-white/60 p-4 transition-colors hover:border-[color:var(--accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-[var(--foreground)]">
-                          {item.sourceLabel || item.url || "Upload de imagem"}
-                        </p>
-                        <p className="mt-1 text-xs text-[color:var(--muted)]">
-                          {PAGE_TYPE_LABELS[item.pageType]} · {GOAL_LABELS[item.goal]} ·{" "}
-                          <span className="tabular-nums">
-                            {new Date(item.createdAt).toLocaleString("pt-BR")}
-                          </span>
-                        </p>
-                      </div>
-                      <StatusBadge status={item.status} />
-                    </div>
-                    {item.status === "failed" && item.error ? (
-                      <p className="mt-3 rounded-xl bg-[color:var(--danger)]/8 px-3 py-2 text-xs text-[color:var(--danger)]">
-                        {item.error}
-                      </p>
-                    ) : null}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
+          ) : null}
         </div>
-      </article>
-    </section>
+
+        {!loaded ? (
+          <p className="text-sm text-[color:var(--muted)]">Carregando...</p>
+        ) : analyses.length === 0 ? (
+          <div className="px-6 py-12 text-center text-[color:var(--muted)]">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              className="mx-auto mb-4 h-12 w-12 text-[color:var(--border)]"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <h3 className="mb-2 text-base font-medium text-[color:var(--foreground)]">Nenhuma análise ainda</h3>
+            <p className="text-sm">Crie sua primeira análise usando o formulário ao lado.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {analyses.map((item) => (
+              <Link
+                key={item.id}
+                href={`/analyses/${item.id}`}
+                className="block rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 transition hover:border-[color:var(--accent)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)]"
+              >
+                <div className="mb-2 flex items-start justify-between gap-3">
+                  <h3 className="min-w-0 flex-1 truncate text-sm font-medium text-[color:var(--foreground)]">
+                    {item.sourceLabel || item.url || "Upload de imagem"}
+                  </h3>
+                  <StatusBadge status={item.status} />
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="rounded bg-[color:var(--background)] px-1.5 py-0.5 text-[11px] text-[color:var(--muted)]">
+                    {PAGE_TYPE_LABELS[item.pageType]}
+                  </span>
+                  <span className="rounded bg-[color:var(--background)] px-1.5 py-0.5 text-[11px] text-[color:var(--muted)]">
+                    {GOAL_LABELS[item.goal]}
+                  </span>
+                  <span className="font-[family-name:var(--font-mono)] text-[11px] text-[color:var(--muted)]">
+                    {new Date(item.createdAt).toLocaleString("pt-BR")}
+                  </span>
+                </div>
+                {item.status === "failed" && item.error ? (
+                  <p className="mt-2 text-xs text-[color:var(--danger)]">{item.error}</p>
+                ) : null}
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
   );
 }

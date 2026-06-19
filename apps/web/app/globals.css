@@ -1,16 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5f2eb;
-  --foreground: #1c1712;
-  --surface: rgba(255, 255, 255, 0.74);
-  --surface-strong: #fffdf9;
-  --border: rgba(28, 23, 18, 0.12);
-  --accent: #bc5f36;
-  --accent-strong: #8a3a18;
-  --muted: #685d52;
-  --success: #1f7a5c;
-  --danger: #b42318;
+  --background: oklch(98% 0.005 250);
+  --foreground: oklch(22% 0.02 240);
+  --surface: oklch(100% 0 0);
+  --surface-strong: oklch(100% 0 0);
+  --border: oklch(90% 0.008 240);
+  --accent: oklch(58% 0.16 145);
+  --accent-strong: oklch(52% 0.16 145);
+  --accent-soft: color-mix(in oklch, var(--accent) 14%, transparent);
+  --muted: oklch(50% 0.018 240);
+  --success: oklch(45% 0.13 145);
+  --danger: oklch(50% 0.18 25);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, Menlo, monospace;
 }
 
 * {
@@ -24,12 +28,13 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, rgba(188, 95, 54, 0.18), transparent 32%),
-    radial-gradient(circle at top right, rgba(31, 122, 92, 0.14), transparent 24%),
-    linear-gradient(180deg, #f8f4ee 0%, #f1ebe2 100%);
+  background: var(--background);
   color: var(--foreground);
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
 }
 
 a {

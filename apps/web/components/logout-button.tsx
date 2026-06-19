@@ -23,7 +23,7 @@ export function LogoutButton() {
       type="button"
       onClick={handleLogout}
       disabled={loading}
-      className="min-h-11 rounded-full border border-[color:var(--border)] bg-white/60 px-5 text-sm font-medium text-[color:var(--muted)] outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] disabled:opacity-60"
+      className="inline-flex items-center rounded-lg px-2.5 py-2 text-[13px] font-medium text-[color:var(--muted)] outline-none transition-colors hover:text-[color:var(--foreground)] focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] disabled:opacity-60"
     >
       {loading ? "Saindo..." : "Sair"}
     </button>

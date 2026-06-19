@@ -14,10 +14,10 @@ const STATUS_MAP: Record<AnalysisStatus, { label: string; kind: Kind; active?: b
 };
 
 const KIND_CLASSES: Record<Kind, { badge: string; dot: string }> = {
-  neutral: { badge: "bg-black/5 text-[color:var(--muted)]", dot: "bg-[color:var(--muted)]" },
-  active: { badge: "bg-[color:var(--accent)]/12 text-[color:var(--accent-strong)]", dot: "bg-[color:var(--accent)]" },
-  success: { badge: "bg-[color:var(--success)]/12 text-[color:var(--success)]", dot: "bg-[color:var(--success)]" },
-  danger: { badge: "bg-[color:var(--danger)]/12 text-[color:var(--danger)]", dot: "bg-[color:var(--danger)]" },
+  neutral: { badge: "bg-black/[0.04] text-[color:var(--muted)]", dot: "bg-[color:var(--muted)]" },
+  active: { badge: "bg-[oklch(92%_0.06_85)] text-[oklch(50%_0.14_85)]", dot: "bg-[oklch(70%_0.16_85)]" },
+  success: { badge: "bg-[oklch(92%_0.06_145)] text-[oklch(40%_0.12_145)]", dot: "bg-[color:var(--success)]" },
+  danger: { badge: "bg-[oklch(92%_0.06_25)] text-[oklch(45%_0.14_25)]", dot: "bg-[color:var(--danger)]" },
 };
 
 export function StatusBadge({ status }: { status: AnalysisStatus }) {
@@ -26,7 +26,7 @@ export function StatusBadge({ status }: { status: AnalysisStatus }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] ${classes.badge}`}
+      className={`inline-flex items-center gap-1.5 rounded px-2 py-1 font-[family-name:var(--font-mono)] text-[11px] font-medium uppercase tracking-[0.02em] ${classes.badge}`}
     >
       <span
         aria-hidden="true"
