@@ -47,7 +47,7 @@ def compute_scores(
 
     if cta:
         cta_visibility = (
-            0.45 * min(1.0, float(cta.get("attention_share") or 0.0) / 0.10)
+            0.45 * min(1.0, float(cta.get("attention_share") or 0.0) / 0.006)
             + 0.35 * float(cta.get("contrast_score") or 0.0)
             + 0.20 * (1.0 if cta.get("above_fold") else 0.3)
         )
@@ -55,7 +55,7 @@ def compute_scores(
         cta_visibility = 0.15  # CTA nao detectado = baixa visibilidade
 
     if headline:
-        headline_attention = 0.7 * min(1.0, float(headline.get("attention_share") or 0.0) / 0.22) + 0.3 * (
+        headline_attention = 0.7 * min(1.0, float(headline.get("attention_share") or 0.0) / 0.012) + 0.3 * (
             1.0 if headline.get("above_fold") else 0.3
         )
     else:
@@ -70,8 +70,10 @@ def compute_scores(
     above_the_fold_efficiency = above / total
 
     # Clutter: muitos elementos + muita area "quente" no heatmap.
-    hot_fraction = float((smap > 0.5).mean())
-    clutter_score = 0.5 * min(1.0, len(elements) / 8.0) + 0.5 * hot_fraction
+    # DeepGaze concentra massa em picos estreitos: limiar 0.3 (nao 0.5, que
+    # quase nunca dispara) e normaliza pela fracao quente tipica (~0.04).
+    hot_fraction = float((smap > 0.3).mean())
+    clutter_score = 0.5 * min(1.0, len(elements) / 8.0) + 0.5 * min(1.0, hot_fraction / 0.04)
 
     return {
         "cta_visibility": _clamp(cta_visibility),
