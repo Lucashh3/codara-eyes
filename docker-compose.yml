@@ -1,0 +1,105 @@
+# Codara Eyes - stack self-hosted para VPS.
+# Tudo roda em containers: proxy (caddy) -> web (Next.js) + worker (Python),
+# com Postgres como banco e fila de jobs. Artifacts ficam num volume de disco.
+#
+# Subir: docker compose up -d --build
+# Variaveis: copie .env.example para .env e ajuste antes de subir.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: codara-eyes-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: codara-eyes-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      DATABASE_URL: postgres://${POSTGRES_USER:-codara}:${POSTGRES_PASSWORD:-codara}@db:5432/${POSTGRES_DB:-codara_eyes}
+      # Login single-tenant do MVP (um acesso interno).
+      AUTH_SECRET: ${AUTH_SECRET:-}
+      APP_PASSWORD: ${APP_PASSWORD:-}
+      ARTIFACTS_DIR: /data/artifacts
+    volumes:
+      # Leitura: o web serve os heatmaps/screenshots gerados pelo worker.
+      - artifacts:/data/artifacts
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/vision-worker/Dockerfile
+    container_name: codara-eyes-worker
+    restart: unless-stopped
+    environment:
+      VISION_WORKER_PORT: 8000
+      DATABASE_URL: postgres://${POSTGRES_USER:-codara}:${POSTGRES_PASSWORD:-codara}@db:5432/${POSTGRES_DB:-codara_eyes}
+      ARTIFACTS_DIR: /data/artifacts
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL:-https://api.deepseek.com}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL:-deepseek-chat}
+      # Fila de jobs (Fase 1): intervalo de poll e timeout do reaper, em segundos.
+      WORKER_POLL_INTERVAL: ${WORKER_POLL_INTERVAL:-2}
+      WORKER_REAP_TIMEOUT: ${WORKER_REAP_TIMEOUT:-120}
+    volumes:
+      # Escrita: o worker salva os artifacts aqui; o web le do mesmo volume.
+      - artifacts:/data/artifacts
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+
+  db:
+    image: postgres:16-alpine
+    container_name: codara-eyes-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-codara}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-codara}
+      POSTGRES_DB: ${POSTGRES_DB:-codara_eyes}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-codara} -d ${POSTGRES_DB:-codara_eyes}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  pgdata:
+  artifacts:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,25 @@
+# Override de DESENVOLVIMENTO. Nao e auto-carregado (o nome nao contem
+# "override"), entao nunca afeta producao. Uso:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d db worker
+#
+# Sobe db + worker em Docker (worker com hot reload e artifacts no host).
+# O `web` roda melhor localmente para hot reload nativo do Next:
+#
+#   npm run db:migrate --workspace @codara-eyes/web   # uma vez
+#   ARTIFACTS_DIR=<repo>/.artifacts \
+#   DATABASE_URL=postgres://codara:codara@localhost:5432/codara_eyes \
+#   npm run dev:web
+
+services:
+  worker:
+    command: ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"]
+    volumes:
+      - ./apps/vision-worker/app:/app/app  # hot reload do codigo do worker
+      - ./.artifacts:/data/artifacts       # artifacts no host (compartilha com o web local)
+    environment:
+      ARTIFACTS_DIR: /data/artifacts
+
+  db:
+    ports:
+      - "5432:5432"  # acesso do host (web local, psql, ferramentas)

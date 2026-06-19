@@ -1,0 +1,15 @@
+# Reverse proxy + HTTPS automatico do Codara Eyes.
+#
+# Local: SITE_ADDRESS=localhost (Caddy serve em HTTP, sem TLS).
+# Producao: SITE_ADDRESS=eyes.seudominio.com (Caddy emite e renova o
+# certificado Let's Encrypt sozinho, desde que o DNS aponte para a VPS
+# e as portas 80/443 estejam abertas).
+
+{
+	email {$ACME_EMAIL}
+}
+
+{$SITE_ADDRESS:localhost} {
+	encode zstd gzip
+	reverse_proxy web:3000
+}

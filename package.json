@@ -1,0 +1,15 @@
+{
+  "name": "codara-eyes",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace @codara-eyes/web",
+    "build:web": "npm run build --workspace @codara-eyes/web",
+    "lint:web": "npm run lint --workspace @codara-eyes/web",
+    "typecheck:web": "npm run typecheck --workspace @codara-eyes/web"
+  }
+}
