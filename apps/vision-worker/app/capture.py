@@ -18,10 +18,45 @@ from app.imaging import read_image_size
 
 GOTO_TIMEOUT_MS = int(os.environ.get("CAPTURE_GOTO_TIMEOUT_MS", "45000"))
 NETWORK_IDLE_TIMEOUT_MS = int(os.environ.get("CAPTURE_NETWORK_IDLE_TIMEOUT_MS", "8000"))
-SETTLE_MS = int(os.environ.get("CAPTURE_SETTLE_MS", "800"))
+SETTLE_MS = int(os.environ.get("CAPTURE_SETTLE_MS", "1200"))
 # Limite de altura (px CSS) para nao gerar screenshots gigantes de paginas
 # muito longas, o que estouraria a latencia da analise.
 MAX_FULLPAGE_HEIGHT = int(os.environ.get("MAX_FULLPAGE_HEIGHT", "12000"))
+
+# Animacoes de entrada (CSS reveal, GSAP, fade/slide-in, scroll-trigger) deixam
+# elementos em opacity:0 / transform no momento do screenshot, sumindo da
+# deteccao e enviesando o heatmap. As tres medidas abaixo forcam o estado final.
+DISABLE_ANIMATIONS = os.environ.get("CAPTURE_DISABLE_ANIMATIONS", "1") != "0"
+SCROLL_PASS = os.environ.get("CAPTURE_SCROLL_PASS", "1") != "0"
+REDUCED_MOTION = os.environ.get("CAPTURE_REDUCED_MOTION", "1") != "0"
+
+# Faz animacoes/transicoes CSS saltarem para o ultimo keyframe (estado visivel)
+# em vez de serem capturadas no meio do caminho.
+_ANTI_ANIM_CSS = """
+*, *::before, *::after {
+  animation-duration: 1ms !important;
+  animation-delay: 0s !important;
+  transition-duration: 1ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+}
+"""
+
+# Percorre a pagina inteira (disparando reveals por IntersectionObserver) e
+# volta ao topo, dando tempo aos reveals de cada secao.
+_SCROLL_PASS_JS = """async () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const step = Math.max(200, Math.floor(window.innerHeight * 0.8));
+  const maxScroll = document.documentElement.scrollHeight;
+  for (let y = 0; y < maxScroll; y += step) {
+    window.scrollTo(0, y);
+    await sleep(80);
+  }
+  window.scrollTo(0, maxScroll);
+  await sleep(150);
+  window.scrollTo(0, 0);
+  await sleep(100);
+}"""
 
 
 @dataclass
@@ -33,7 +68,11 @@ class CaptureResult:
 
 
 def _capture_one(browser, context_kwargs: dict, url: str, out_path: Path) -> tuple[int, int]:
-    context = browser.new_context(**context_kwargs)
+    kwargs = dict(context_kwargs)
+    if REDUCED_MOTION:
+        # Sites que respeitam prefers-reduced-motion pulam a animacao de entrada.
+        kwargs.setdefault("reduced_motion", "reduce")
+    context = browser.new_context(**kwargs)
     try:
         page = context.new_page()
         page.goto(url, wait_until="load", timeout=GOTO_TIMEOUT_MS)
@@ -41,6 +80,19 @@ def _capture_one(browser, context_kwargs: dict, url: str, out_path: Path) -> tup
             page.wait_for_load_state("networkidle", timeout=NETWORK_IDLE_TIMEOUT_MS)
         except Exception:
             pass  # paginas com polling nunca ficam idle; seguimos mesmo assim
+
+        if DISABLE_ANIMATIONS:
+            try:
+                page.add_style_tag(content=_ANTI_ANIM_CSS)
+            except Exception:
+                pass  # melhor-esforco: nao bloquear a captura se a injecao falhar
+
+        if SCROLL_PASS:
+            try:
+                page.evaluate(_SCROLL_PASS_JS)
+            except Exception:
+                pass
+
         page.wait_for_timeout(SETTLE_MS)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         dims = page.evaluate(
