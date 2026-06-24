@@ -20,6 +20,7 @@ import numpy as np
 import pytesseract
 from pytesseract import Output
 
+from app.dom_elements import classify_dom
 from app.scoring import compute_scores
 
 MAX_WIDTH = 1440
@@ -249,6 +250,8 @@ def analyze_viewport(
     viewport_type: str,
     artifacts_dir: Path,
     analysis_id: str,
+    dom_elements: list[dict[str, Any]] | None = None,
+    css_width: float | None = None,
 ) -> VisionResult:
     img = _load_normalized(source_path)
     height, width = img.shape[:2]
@@ -269,7 +272,11 @@ def analyze_viewport(
     cv2.imwrite(str(artifacts_dir / heatmap_rel), _heatmap(img, smap))
     cv2.imwrite(str(artifacts_dir / focus_rel), _focus(img, smap))
 
-    elements = _classify(_ocr_lines(img), img, fold)
+    # Fonte primaria: estrutura semantica do DOM (URLs). Sem DOM (uploads) ou se
+    # nada for classificado, cai no caminho OCR + heuristica de pixels.
+    elements = classify_dom(dom_elements, css_width, img.shape, fold)
+    if not elements:
+        elements = _classify(_ocr_lines(img), img, fold)
     for element in elements:
         x, y, w, h = element["bbox"]
         element["contrast_score"] = _region_contrast(gray, (x, y, w, h))

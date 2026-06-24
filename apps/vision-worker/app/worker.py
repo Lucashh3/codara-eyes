@@ -150,7 +150,15 @@ class JobWorker:
                     insert_artifact(
                         conn, analysis_id, viewport_id, "source_screenshot", result.storage_path, "image/png"
                     )
-                    viewports.append({"id": viewport_id, "type": result.viewport_type, "source_path": result.storage_path})
+                    viewports.append(
+                        {
+                            "id": viewport_id,
+                            "type": result.viewport_type,
+                            "source_path": result.storage_path,
+                            "css_width": result.css_width,
+                            "dom_elements": result.dom_elements,
+                        }
+                    )
             logger.info("capturados %s viewport(s) para %s", len(viewports), analysis_id)
             return viewports
 
@@ -164,7 +172,8 @@ class JobWorker:
             viewport_id = insert_viewport(conn, analysis_id, "desktop", width, height)
             insert_artifact(conn, analysis_id, viewport_id, "source_upload", path, _guess_mime(path))
         logger.info("upload registrado como viewport para %s", analysis_id)
-        return [{"id": viewport_id, "type": "desktop", "source_path": path}]
+        # Upload nao tem DOM: a analise cai no caminho OCR.
+        return [{"id": viewport_id, "type": "desktop", "source_path": path, "css_width": None, "dom_elements": None}]
 
     def _analyze(self, conn: psycopg.Connection, analysis_id: str, viewport: dict):
         # Visao (lenta) fora de transacao; so depois grava no banco.
@@ -173,6 +182,8 @@ class JobWorker:
             viewport["type"],
             self._artifacts_dir,
             analysis_id,
+            dom_elements=viewport.get("dom_elements"),
+            css_width=viewport.get("css_width"),
         )
         with conn.transaction():
             insert_artifact(conn, analysis_id, viewport["id"], "normalized", result.normalized_path, "image/png")
